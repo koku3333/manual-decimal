@@ -1,0 +1,3036 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Calculator (Auto)</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 900px; margin: auto; background-color: #000; color: #fff; font-size: 18px; }
+    label, input, select { display: block; margin: 10px 0; }
+    input, select, textarea { width: 100%; padding: 8px; font-size: 18px; background-color: #222; color: #fff; border: 1px solid #555; }
+    .readonly-field {
+      background-color: #2f2f2f;
+      border-color: #444;
+      color: #999;
+      cursor: not-allowed;
+    }
+    .readonly-label { color: #888; }
+    .highlight-input { background-color: #ffe082; color: #000; border: 1px solid #ffeb3b; }
+    table { width: 100%; margin-top: 20px; border-collapse: collapse; text-align: center; }
+    th, td { border: 1px solid #444; padding: 10px; }
+    th { font-weight: bold; }
+    .small { font-size: 14px; }
+    .usdt { color: orange; }
+    .btc { color: orange; }
+    .section { background-color: #111; padding: 12px; border: 1px solid #333; border-radius: 6px; margin: 14px 0; }
+    #exitScriptSection { background-color: #330000; border-color: #660000; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .warn { color: gold; white-space: nowrap; }
+    button { background-color: #333; color: #fff; border: 1px solid #555; padding: 8px 12px; font-size: 16px; cursor: pointer; border-radius: 6px; }
+    .preview-btn {
+      background-color: #2e7d32;
+      border-color: #2e7d32;
+      color: #fff;
+      font-size: 18px;
+      font-weight: bold;
+      padding: 10px 24px;
+      text-transform: uppercase;
+      box-shadow: 0 0 14px rgba(46, 125, 50, 0.5);
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+    }
+    .preview-btn:hover {
+      transform: scale(1.02);
+      box-shadow: 0 0 20px rgba(46, 125, 50, 0.7);
+    }
+    .lev-cap-btn {
+      background-color: #ff1744;
+      border-color: #ff1744;
+      color: #fff;
+      font-size: 26px;
+      font-weight: bold;
+      padding: 18px 36px;
+      border-radius: 12px;
+      text-transform: uppercase;
+      box-shadow: 0 0 20px rgba(255, 23, 68, 0.6);
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+    }
+    .lev-cap-btn:not(:disabled):hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 28px rgba(255, 23, 68, 0.8);
+    }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .copy-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
+    .muted { color: #bbb; font-size: 16px; }
+    details summary { cursor: pointer; }
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 1000;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-content {
+      background-color: #121212;
+      border: 1px solid #333;
+      border-radius: 12px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+      max-width: 360px;
+      width: 100%;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .modal-title { font-size: 24px; margin: 0; }
+    .modal-subtitle { color: #8bc34a; font-size: 16px; text-transform: uppercase; letter-spacing: 0.08em; }
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 28px;
+      line-height: 1;
+      padding: 4px 8px;
+    }
+    .modal-close:hover { color: #8bc34a; transform: none; box-shadow: none; }
+    .preview-card {
+      background: #000;
+      border: 1px solid #444;
+      border-radius: 10px;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .preview-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding: 8px 14px;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .preview-row:last-child { border-bottom: none; }
+    .preview-label { font-weight: bold; letter-spacing: 0.06em; }
+    .preview-value {
+      justify-self: end;
+      min-width: 120px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      background: #111;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      text-align: right;
+    }
+    .preview-long .preview-row.tp { border-left: 6px solid #ff4081; }
+    .preview-long .preview-row.ep { background-color: rgba(46, 125, 50, 0.4); border-left: 6px solid #2e7d32; }
+    .preview-long .preview-row.ep .preview-value { background-color: #1b5e20; border-color: rgba(255, 255, 255, 0.18); }
+    .preview-long .preview-row.low { border-left: 6px solid #ffa726; }
+    .preview-long .preview-row.sl { border-left: 6px solid #ffa726; }
+    .preview-short .preview-row.sl { border-left: 6px solid #fdd835; }
+    .preview-short .preview-row.hi { border-left: 6px solid #8d6e63; }
+    .preview-short .preview-row.ep { border-left: 6px solid #c62828; }
+    .preview-short .preview-row.ep .preview-value { background-color: #6a1b1a; }
+    .preview-short .preview-row.tp { border-left: 6px solid #66bb6a; }
+    .preview-row.tp .preview-value { background-color: rgba(102, 187, 106, 0.2); }
+    .preview-row.sl .preview-value { background-color: rgba(255, 193, 7, 0.18); }
+    .preview-row.low .preview-value { background-color: rgba(255, 167, 38, 0.18); }
+    .preview-row.low .preview-label,
+    .preview-row.low .preview-value { color: #66bb6a; }
+    .preview-row.hi .preview-value { background-color: rgba(141, 110, 99, 0.18); }
+    .preview-row.hi .preview-label,
+    .preview-row.hi .preview-value { color: #ef5350; }
+    .preview-card.preview-quick-setup.preview-long .preview-row.low {
+      background-color: rgba(46, 125, 50, 0.4);
+      border-left: 6px solid #2e7d32;
+    }
+    .preview-card.preview-quick-setup.preview-long .preview-row.low .preview-label,
+    .preview-card.preview-quick-setup.preview-long .preview-row.low .preview-value { color: #fff; }
+    .preview-card.preview-quick-setup.preview-long .preview-row.low .preview-value {
+      background-color: #1b5e20;
+      border-color: rgba(255, 255, 255, 0.18);
+    }
+    .preview-card.preview-quick-setup.preview-short .preview-row.hi {
+      border-left: 6px solid #c62828;
+    }
+    .preview-card.preview-quick-setup.preview-short .preview-row.hi .preview-label,
+    .preview-card.preview-quick-setup.preview-short .preview-row.hi .preview-value { color: #fff; }
+    .preview-card.preview-quick-setup.preview-short .preview-row.hi .preview-value {
+      background-color: #6a1b1a;
+      border-color: rgba(255, 255, 255, 0.18);
+    }
+  </style>
+</head>
+<body>
+  <div class="section">
+    <label>MU Helper Import
+      <textarea id="muHelperImport" rows="2" placeholder="Paste MU Helper export" oninput="onMuHelperImportChange(this)"></textarea>
+    </label>
+    <div id="muHelperImportFeedback" class="muted"></div>
+  </div>
+
+  <!-- Controls -->
+  <div class="section">
+    <label>Strategy
+      <select id="strategy" onchange="onStrategyChange()">
+        <option value="Quick Setup">Quick Setup</option>
+        <option value="Swarm" selected>Swarm / Chase</option>
+      </select>
+    </label>
+
+    <label>Exchange
+      <select id="exchange" onchange="calculate()">
+        <option value="Bybit perpetual" selected>Bybit perpetual</option>
+        <option value="Kucoin perpetual">Kucoin perpetual</option>
+        <option value="Bybit perpetual testnet">Bybit perpetual testnet</option>
+        <option value="Binance perpetual testnet">Binance perpetual testnet</option>
+      </select>
+    </label>
+
+    <label>Trade type
+      <select id="tradeType" onchange="calculate()">
+        <option value="Long" selected>Long</option>
+        <option value="Short">Short</option>
+      </select>
+    </label>
+
+    <label>Subaccount
+      <select id="subaccount" onchange="onSubaccountChange()">
+        <option value=""></option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="section">
+    <div class="row">
+      <label>Pair 1
+        <input type="text" id="pair1" placeholder="BTC" title="e.g. BTC in BTC/USDT" />
+      </label>
+      <label>Pair 2
+        <input type="text" id="pair2" placeholder="USDT" title="e.g. USDT in BTC/USDT" />
+      </label>
+    </div>
+  </div>
+
+  <!-- Quick Setup section -->
+  <div id="quickSetupSection" class="section" style="display:none;">
+    <strong>QUICK SETUP</strong>
+    <div class="row" id="quickMarketRow" style="display:none;">
+      <label>Market Price B ($)
+        <input type="text" id="marketB" class="highlight-input" oninput="formatMarketBAndSync(this)" />
+      </label>
+      <label>mrkt to 24m PDP buffer
+        <input type="number" id="marketBBuffer" value="0.1" step="0.01" oninput="onQuickBufferChange(this)" />
+      </label>
+    </div>
+    <div class="row">
+      <label class="readonly-label">24m potential div price (no dot yet)
+        <input type="text" id="divPrice" class="readonly-field" readonly />
+      </label>
+      <label>Box edge price
+        <input type="text" id="boxPrice" oninput="formatAndCalculate(this)" />
+      </label>
+    </div>
+  </div>
+
+  <label>Margin ($): <input type="text" id="budget" oninput="formatAndCalculate(this)" /></label>
+  <div class="row">
+    <label>SL max price (= Box edge)
+      <input type="text" id="stop" oninput="formatAndCalculate(this)" />
+    </label>
+    <label>SL to EP buffer
+      <input type="number" id="slEpBuffer" value="0.3" step="0.01" oninput="onSlEpBufferChange(this)" />
+    </label>
+  </div>
+  <div class="row" id="marketRow">
+    <label>Market Price ($)
+      <input type="text" id="market" class="highlight-input" oninput="formatMarketAndSyncEntry(this)" />
+    </label>
+    <label>mrkt to EP buffer
+      <input type="number" id="marketBuffer" value="0" step="0.01" oninput="onMarketBufferChange(this)" />
+    </label>
+  </div>
+  <label class="readonly-label">Entry Price ($): <input type="text" id="entry" class="readonly-field" readonly /></label>
+
+  <details>
+    <summary>TP PS (%)</summary>
+    <label>TP1 PS (%): <input type="number" id="tp1ps" value="30" oninput="calculate()" /></label>
+    <label>TP2 PS (%): <input type="number" id="tp2ps" value="30" oninput="calculate()" /></label>
+    <label>TPx PS (%): <input type="number" id="tpxps" value="10" oninput="calculate()" /></label>
+  </details>
+
+  <!-- Expected TP / Safest SL -->
+  <div id="expected-sl-table">
+    <table>
+      <tr>
+        <th>Expected TP1 price</th>
+        <th>Expected TP2 price</th>
+        <th>Safest SL price</th>
+      </tr>
+      <tr>
+        <td><input type="text" id="expTP1" oninput="formatAndCalculate(this)" placeholder="e.g. 100,000" /></td>
+        <td><input type="text" id="expTP2" oninput="formatAndCalculate(this)" placeholder="e.g. 120,000" /></td>
+        <td>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <input type="text" id="safestSL" readonly />
+            <button type="button" id="updateSLBtn" onclick="updateSLFromSafest()" disabled>Update SL</button>
+          </div>
+          <span id="safestSLWarn" class="small warn"></span>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Extra expected TP fields -->
+  <div class="row">
+    <label>Expected TP3 price <input type="text" id="expTP3" oninput="formatAndCalculate(this)" /></label>
+    <label>Expected TP4 price <input type="text" id="expTP4" oninput="formatAndCalculate(this)" /></label>
+  </div>
+  <div class="row">
+    <label>Expected TP5 price <input type="text" id="expTP5" oninput="formatAndCalculate(this)" /></label>
+    <label>Expected TP6 price <input type="text" id="expTP6" oninput="formatAndCalculate(this)" /></label>
+  </div>
+
+  <button type="button" class="preview-btn" onclick="previewTrade()">Preview</button>
+
+  <div id="output-table"></div>
+  <div id="tp-table"></div>
+
+  <!-- Output section -->
+  <div class="section">
+    <strong>Output</strong>
+    <div class="copy-row">
+      <input type="text" id="cmdRemove" readonly value="rm ~/hummingbot_scripts/script.py" />
+      <button onclick="copyValue('cmdRemove')">Copy</button>
+    </div>
+    <div class="copy-row">
+      <input type="text" id="cmdNano" readonly />
+      <button onclick="copyValue('cmdNano')">Copy</button>
+    </div>
+    <label>script
+      <div class="copy-row">
+        <textarea id="scriptBox" rows="18" spellcheck="false"></textarea>
+        <button type="button" onclick="copyValue('scriptBox')">Copy</button>
+      </div>
+    </label>
+    <div class="muted">paste changes, Ctrl+O, Enter, Ctrl+X</div>
+    <div class="copy-row">
+      <input type="text" id="cmdDockerCp" readonly />
+      <button onclick="copyValue('cmdDockerCp')">Copy</button>
+    </div>
+  </div>
+
+  <!-- New: Run in HB helper boxes -->
+  <div class="section">
+    <strong>Run in Hummingbot</strong>
+
+    <label>
+      <span id="connectTitleText">Connect to Bybit perpetual in hb and change the API KEY</span>
+      <div class="copy-row">
+        <input type="text" id="connectCmd" readonly />
+        <button onclick="copyValue('connectCmd')">Copy</button>
+      </div>
+    </label>
+
+    <div id="kucoinCreds" style="display:none;">
+      <label>key
+        <div class="copy-row">
+          <input type="text" id="kucoinKey" oninput="onCredentialInput()" />
+          <button onclick="copyValue('kucoinKey')">Copy</button>
+        </div>
+      </label>
+      <label>secret
+        <div class="copy-row">
+          <input type="text" id="kucoinSecret" oninput="onCredentialInput()" />
+          <button onclick="copyValue('kucoinSecret')">Copy</button>
+        </div>
+      </label>
+    </div>
+
+    <label>then start the script
+      <div class="copy-row">
+        <input type="text" id="startScriptCmd" readonly />
+        <button onclick="copyValue('startScriptCmd')">Copy</button>
+      </div>
+    </label>
+  </div>
+
+  <div class="section" id="exitScriptSection">
+    <strong>Exit Script</strong>
+    <div class="copy-row">
+      <input type="text" id="exitCmdRemove" readonly value="rm ~/hummingbot_scripts/exit.py" />
+      <button onclick="copyValue('exitCmdRemove')">Copy</button>
+    </div>
+    <div class="copy-row">
+      <input type="text" id="exitCmdNano" readonly value="nano ~/hummingbot_scripts/exit.py" />
+      <button onclick="copyValue('exitCmdNano')">Copy</button>
+    </div>
+    <label>script
+      <div class="copy-row">
+        <textarea id="exitScriptBox" rows="18" spellcheck="false"></textarea>
+        <button type="button" onclick="copyValue('exitScriptBox')">Copy</button>
+      </div>
+    </label>
+    <div class="muted">paste changes, Ctrl+O, Enter, Ctrl+X</div>
+    <div class="copy-row">
+      <input type="text" id="exitCmdDockerCp" readonly value="docker cp ~/hummingbot_scripts/exit.py hb:/home/hummingbot/scripts/" />
+      <button onclick="copyValue('exitCmdDockerCp')">Copy</button>
+    </div>
+    <div class="copy-row">
+      <input type="text" id="exitCmdStart" readonly value="start --script exit.py" />
+      <button onclick="copyValue('exitCmdStart')">Copy</button>
+    </div>
+  </div>
+
+  <div id="previewModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="previewTitle">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="previewTitle" class="modal-title">Trade Preview</h2>
+        <button type="button" class="modal-close" aria-label="Close preview" onclick="closePreview()">&times;</button>
+      </div>
+      <div id="previewSubtitle" class="modal-subtitle"></div>
+      <div id="previewBody"></div>
+    </div>
+  </div>
+
+<script>
+  // ---------- utils ----------
+  function cleanNumber(input) { return parseFloat(String(input || '').replace(/,/g, '')); }
+  function formatWithCommas(num) { return isNaN(num) ? "" : Number(num).toLocaleString(); }
+  function formatImportNumber(value) {
+    if (value === undefined || value === null) return '';
+    const raw = String(value).trim();
+    if (!raw) return '';
+    const normalized = raw.replace(/,/g, '');
+    const num = parseFloat(normalized);
+    if (isNaN(num)) return raw;
+    if (normalized.includes('.')) {
+      const decimals = normalized.split('.')[1].length;
+      return num.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    }
+    return num.toLocaleString();
+  }
+  function parseMuHelperImport(raw) {
+    if (!raw) return null;
+    const pattern = /^\s*(Long|Short)\s+([A-Za-z0-9\-]+)_([A-Za-z0-9\-]+)\s+([0-9.,]+)_([0-9.,]+)\s*,\s*maxSL:\s*([0-9.,]+)\s*,\s*exTP1_2:\s*([0-9.,]+(?:_[0-9.,]+){5})\s*,\s*Divs:\s*(.*)\s*$/i;
+    const match = raw.match(pattern);
+    if (!match) return null;
+    const tradeType = match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase();
+    const tpValues = match[7].split('_').map(segment => segment.trim());
+    return {
+      tradeType,
+      pair1: match[2].toUpperCase(),
+      pair2: match[3].toUpperCase(),
+      boxLong: match[4],
+      boxShort: match[5],
+      maxSl: match[6],
+      tp1: tpValues[0],
+      tp2: tpValues[1],
+      tp3: tpValues[2],
+      tp4: tpValues[3],
+      tp5: tpValues[4],
+      tp6: tpValues[5],
+      divs: match[8] ? match[8].trim() : ''
+    };
+  }
+  function applyMuHelperImport(data) {
+    if (!data) return false;
+    const tradeTypeEl = document.getElementById('tradeType');
+    if (tradeTypeEl) {
+      tradeTypeEl.value = data.tradeType;
+    }
+    const pair1El = document.getElementById('pair1');
+    if (pair1El) pair1El.value = data.pair1;
+    const pair2El = document.getElementById('pair2');
+    if (pair2El) pair2El.value = data.pair2;
+
+    const numericMappings = [
+      ['boxPrice', data.tradeType === 'Short' ? data.boxShort : data.boxLong],
+      ['stop', data.maxSl],
+      ['expTP1', data.tp1],
+      ['expTP2', data.tp2],
+      ['expTP3', data.tp3],
+      ['expTP4', data.tp4],
+      ['expTP5', data.tp5],
+      ['expTP6', data.tp6]
+    ];
+    numericMappings.forEach(([id, value]) => {
+      const el = document.getElementById(id);
+      if (!el || value === undefined || value === null) return;
+      el.value = formatImportNumber(value);
+    });
+
+    calculate();
+
+    return true;
+  }
+  function onMuHelperImportChange(el) {
+    if (!el) return;
+    const feedbackEl = document.getElementById('muHelperImportFeedback');
+    const raw = (el.value || '').trim();
+    if (!raw) {
+      if (feedbackEl) feedbackEl.textContent = '';
+      return;
+    }
+    const parsed = parseMuHelperImport(raw);
+    if (!parsed) {
+      if (feedbackEl) feedbackEl.textContent = 'Unable to parse MU Helper import.';
+      return;
+    }
+    el.value = raw;
+    applyMuHelperImport(parsed);
+    if (feedbackEl) {
+      const summary = [`${parsed.tradeType} ${parsed.pair1}/${parsed.pair2}`];
+      if (parsed.divs) summary.push(`Divs: ${parsed.divs}`);
+      feedbackEl.textContent = summary.join(' • ');
+    }
+  }
+  function escapeHtml(value) {
+    if (value === undefined || value === null) return '';
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  const MARGIN_STORAGE_KEY = 'calc_auto_margin_budget';
+  const API_CREDENTIAL_STORAGE_KEY = 'calc_auto_api_credentials_v1';
+  let cachedApiCredentialStore = null;
+
+  function getCredentialStorageKey(exchange, subaccount) {
+    const exch = (exchange ?? '').toString();
+    const sub = (subaccount ?? '').toString();
+    return `${exch}::${sub}`;
+  }
+
+  function loadApiCredentialStore() {
+    if (cachedApiCredentialStore) return cachedApiCredentialStore;
+    cachedApiCredentialStore = {};
+    try {
+      if (typeof localStorage === 'undefined') return cachedApiCredentialStore;
+      const raw = localStorage.getItem(API_CREDENTIAL_STORAGE_KEY);
+      if (!raw) return cachedApiCredentialStore;
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object') return cachedApiCredentialStore;
+      Object.entries(parsed).forEach(([key, value]) => {
+        if (!value || typeof value !== 'object') return;
+        cachedApiCredentialStore[key] = {
+          key: typeof value.key === 'string' ? value.key : '',
+          secret: typeof value.secret === 'string' ? value.secret : ''
+        };
+      });
+    } catch (err) {
+      cachedApiCredentialStore = {};
+    }
+    return cachedApiCredentialStore;
+  }
+
+  function persistApiCredentialStore() {
+    try {
+      if (typeof localStorage === 'undefined') return;
+      const store = loadApiCredentialStore();
+      localStorage.setItem(API_CREDENTIAL_STORAGE_KEY, JSON.stringify(store));
+    } catch (err) {
+      // ignore storage errors
+    }
+  }
+
+  function getStoredApiCredentials(exchange, subaccount) {
+    const store = loadApiCredentialStore();
+    const key = getCredentialStorageKey(exchange, subaccount);
+    const entry = store[key];
+    if (entry && typeof entry === 'object') {
+      return {
+        key: typeof entry.key === 'string' ? entry.key : '',
+        secret: typeof entry.secret === 'string' ? entry.secret : ''
+      };
+    }
+    return { key: '', secret: '' };
+  }
+
+  function setStoredApiCredentials(exchange, subaccount, keyValue, secretValue) {
+    const store = loadApiCredentialStore();
+    const storageKey = getCredentialStorageKey(exchange, subaccount);
+    store[storageKey] = {
+      key: keyValue ?? '',
+      secret: secretValue ?? ''
+    };
+    persistApiCredentialStore();
+  }
+
+  function populateCredentialInputs(exchange, subaccount) {
+    const keyEl = document.getElementById('kucoinKey');
+    const secretEl = document.getElementById('kucoinSecret');
+    if (!keyEl || !secretEl) return;
+    const { key, secret } = getStoredApiCredentials(exchange, subaccount);
+    if (keyEl.value !== key) keyEl.value = key;
+    if (secretEl.value !== secret) secretEl.value = secret;
+  }
+
+  function onCredentialInput() {
+    const exchangeEl = document.getElementById('exchange');
+    const subEl = document.getElementById('subaccount');
+    const keyEl = document.getElementById('kucoinKey');
+    const secretEl = document.getElementById('kucoinSecret');
+    if (!exchangeEl || !keyEl || !secretEl) return;
+    const exchange = exchangeEl.value || '';
+    const sub = subEl ? (subEl.value || '') : '';
+    setStoredApiCredentials(exchange, sub, keyEl.value || '', secretEl.value || '');
+    calculate();
+  }
+
+  function rememberMarginValue(value) {
+    try {
+      if (typeof localStorage === 'undefined') return;
+      localStorage.setItem(MARGIN_STORAGE_KEY, value ?? '');
+    } catch (err) {
+      // ignore storage errors (e.g., private browsing)
+    }
+  }
+
+  function restoreMarginFromStorage() {
+    try {
+      if (typeof localStorage === 'undefined') return;
+      const stored = localStorage.getItem(MARGIN_STORAGE_KEY);
+      if (stored === null) return;
+      const budgetEl = document.getElementById('budget');
+      if (!budgetEl) return;
+      budgetEl.value = stored;
+      formatAndCalculate(budgetEl);
+    } catch (err) {
+      // ignore storage errors (e.g., private browsing)
+    }
+  }
+
+  function sanitizeBufferInputValue(el, defaultValue) {
+    if (!el) return defaultValue;
+    const raw = parseFloat(el.value);
+    if (isNaN(raw)) {
+      el.value = defaultValue.toString();
+      return defaultValue;
+    }
+    const cleaned = Math.abs(raw);
+    if (cleaned !== raw) {
+      el.value = cleaned.toString();
+    }
+    return cleaned;
+  }
+
+  function readBufferValue(id, defaultValue) {
+    const el = document.getElementById(id);
+    if (!el) return defaultValue;
+    const raw = parseFloat(el.value);
+    if (isNaN(raw)) return defaultValue;
+    return Math.abs(raw);
+  }
+
+  function getBufferFractionById(id, defaultValue) {
+    const value = readBufferValue(id, defaultValue);
+    return value / 100;
+  }
+
+  function formatAndCalculate(el) {
+    const raw = el.value.replace(/,/g, '');
+    const parsed = parseFloat(raw);
+    if (!isNaN(parsed)) { el.value = formatWithCommas(parsed); }
+    if (el && el.id === 'budget') { rememberMarginValue(el.value); }
+    calculate();
+  }
+  function formatMarketAndSyncEntry(el) {
+    const raw = el.value.replace(/,/g, '');
+    const parsed = parseFloat(raw);
+    if (!isNaN(parsed)) { el.value = formatWithCommas(parsed); }
+    syncEntryWithMarket();
+    calculate();
+  }
+  function formatMarketBAndSync(el) {
+    const raw = el.value.replace(/,/g, '');
+    const parsed = parseFloat(raw);
+    if (!isNaN(parsed)) { el.value = formatWithCommas(parsed); }
+    syncQuickDivFromMarketB();
+    calculate();
+  }
+  function toDecimalStr(v) {
+    if (v === undefined || v === null || isNaN(v)) return null;
+    return String(v);
+  }
+
+  function onMarketBufferChange(el) {
+    sanitizeBufferInputValue(el, 0);
+    syncEntryWithMarket();
+    calculate();
+  }
+
+  function onSlEpBufferChange(el) {
+    sanitizeBufferInputValue(el, 0.3);
+    calculate();
+  }
+
+  function onQuickBufferChange(el) {
+    sanitizeBufferInputValue(el, 0.1);
+    syncQuickDivFromMarketB();
+    calculate();
+  }
+
+  function syncQuickDivFromMarketB() {
+    const strategyEl = document.getElementById('strategy');
+    if (!strategyEl || strategyEl.value !== 'Quick Setup') return;
+    const marketBEl = document.getElementById('marketB');
+    const divEl = document.getElementById('divPrice');
+    if (!marketBEl || !divEl) return;
+    const marketB = cleanNumber(marketBEl.value);
+    if (isNaN(marketB) || marketB <= 0) {
+      divEl.value = '';
+      return;
+    }
+    const tradeType = document.getElementById('tradeType').value;
+    const bufferFraction = getBufferFractionById('marketBBuffer', 0.1);
+    const sign = (tradeType === 'Long') ? -1 : 1;
+    const divValue = marketB * (1 + sign * bufferFraction);
+    divEl.value = formatWithCommas(divValue);
+  }
+
+  function syncEntryWithMarket() {
+    const strategyEl = document.getElementById('strategy');
+    if (strategyEl && strategyEl.value === 'Quick Setup') return;
+    const marketEl = document.getElementById('market');
+    const entryEl = document.getElementById('entry');
+    if (!marketEl || !entryEl) return;
+    const market = cleanNumber(marketEl.value);
+    if (isNaN(market) || market <= 0) {
+      entryEl.value = '';
+      return;
+    }
+    const tradeType = document.getElementById('tradeType').value;
+    const bufferFraction = getBufferFractionById('marketBuffer', 0);
+    const sign = (tradeType === 'Long') ? -1 : 1;
+    const entry = market * (1 + sign * bufferFraction);
+    entryEl.value = formatWithCommas(entry);
+  }
+
+  function syncMarketWithEntry(entry) {
+    const strategyEl = document.getElementById('strategy');
+    if (strategyEl && strategyEl.value === 'Quick Setup') return;
+    const marketEl = document.getElementById('market');
+    if (!marketEl) return;
+    if (isNaN(entry) || entry <= 0) {
+      marketEl.value = '';
+      return;
+    }
+    const tradeType = document.getElementById('tradeType').value;
+    const bufferFraction = getBufferFractionById('marketBuffer', 0);
+    const sign = (tradeType === 'Long') ? -1 : 1;
+    const factor = 1 + sign * bufferFraction;
+    if (!factor || factor <= 0) {
+      marketEl.value = '';
+      return;
+    }
+    const market = entry / factor;
+    marketEl.value = formatWithCommas(market);
+  }
+
+  function onStrategyChange() {
+    const strategy = document.getElementById('strategy').value;
+    document.getElementById('quickSetupSection').style.display = (strategy === 'Quick Setup') ? 'block' : 'none';
+    const marketRow = document.getElementById('marketRow');
+    if (marketRow) marketRow.style.display = (strategy === 'Quick Setup') ? 'none' : 'grid';
+    const quickMarketRow = document.getElementById('quickMarketRow');
+    if (quickMarketRow) quickMarketRow.style.display = (strategy === 'Quick Setup') ? 'grid' : 'none';
+    if (strategy === 'Quick Setup') {
+      syncQuickDivFromMarketB();
+    }
+    calculate();
+  }
+
+  // Copy utility (modern API with fallback)
+  function copyValue(id) {
+    const el = document.getElementById(id);
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(el.value || el.textContent || '').catch(()=>{});
+    } else {
+      el.select(); el.setSelectionRange(0, 99999); document.execCommand('copy');
+    }
+  }
+
+  document.addEventListener('keydown', (event) => {
+    if (!event.ctrlKey || event.altKey || event.metaKey) return;
+    const key = event.key.toLowerCase();
+    if (key === 'f') {
+      event.preventDefault();
+      copyValue('scriptBox');
+    } else if (key === 'd') {
+      event.preventDefault();
+      copyValue('cmdDockerCp');
+    }
+  });
+
+  function onSubaccountChange() {
+    calculate();
+  }
+
+  function updateOutputCommands() {
+    const n = document.getElementById('subaccount').value; // '' or '1'..'5'
+    const suffix = n ? n : '';
+    const hb = n ? `hb${n}` : 'hb';
+    document.getElementById('cmdRemove').value = `rm ~/hummingbot_scripts/script.py`;
+    document.getElementById('cmdNano').value = `nano ~/hummingbot_scripts/script.py`;
+    document.getElementById('cmdDockerCp').value = `docker cp ~/hummingbot_scripts/script.py ${hb}:/home/hummingbot/scripts/`;
+    const exitRemove = document.getElementById('exitCmdRemove');
+    if (exitRemove) exitRemove.value = `rm ~/hummingbot_scripts/exit.py`;
+    const exitNano = document.getElementById('exitCmdNano');
+    if (exitNano) exitNano.value = `nano ~/hummingbot_scripts/exit.py`;
+    const exitDocker = document.getElementById('exitCmdDockerCp');
+    if (exitDocker) exitDocker.value = `docker cp ~/hummingbot_scripts/exit.py ${hb}:/home/hummingbot/scripts/`;
+    const exitStart = document.getElementById('exitCmdStart');
+    if (exitStart) exitStart.value = `start --script exit.py`;
+  }
+
+  function updateConnectionBoxes() {
+    const exchange = document.getElementById('exchange').value;
+    const sub = document.getElementById('subaccount').value; // '' or '1'..'5'
+    const titleEl = document.getElementById('connectTitleText');
+    const connectCmdEl = document.getElementById('connectCmd');
+    const kucoinCredsDiv = document.getElementById('kucoinCreds');
+    const keyEl = document.getElementById('kucoinKey');
+    const secretEl = document.getElementById('kucoinSecret');
+    const startEl = document.getElementById('startScriptCmd');
+
+    // start command
+    startEl.value = `start --script script.py`;
+
+    if (exchange === 'Bybit perpetual') {
+      titleEl.textContent = 'Connect to Bybit perpetual in hb and change the API KEY';
+      connectCmdEl.value = 'connect bybit_perpetual';
+      kucoinCredsDiv.style.display = 'block';
+      populateCredentialInputs(exchange, sub);
+    } else if (exchange === 'Kucoin perpetual') {
+      titleEl.textContent = 'Connect to Kucoin perpetual in hb and change the API KEY';
+      connectCmdEl.value = 'connect kucoin_perpetual';
+      kucoinCredsDiv.style.display = 'block';
+      populateCredentialInputs(exchange, sub);
+    } else if (exchange === 'Bybit perpetual testnet') {
+      titleEl.textContent = 'Connect to Bybit perpetual testnet in hb and change the API KEY';
+      connectCmdEl.value = 'connect bybit_perpetual_testnet';
+      kucoinCredsDiv.style.display = 'block';
+      populateCredentialInputs(exchange, sub);
+    } else {
+      titleEl.textContent = 'Connect to Binance perpetual testnet in hb';
+      connectCmdEl.value = 'connect binance_perpetual_testnet';
+      kucoinCredsDiv.style.display = 'none';
+      keyEl.value = '';
+      secretEl.value = '';
+    }
+  }
+
+  function updateSLFromSafest() {
+    const safest = document.getElementById('safestSL').value;
+    if (!safest) return;
+    const stopEl = document.getElementById('stop');
+    stopEl.value = safest;
+    formatAndCalculate(stopEl);
+  }
+
+  function lowerSLToCap() {
+    const entry = cleanNumber(document.getElementById('entry').value);
+    const tradeType = document.getElementById('tradeType').value;
+    const exchange = document.getElementById('exchange').value;
+    if (isNaN(entry) || entry <= 0) return;
+    const cap = getLeverageCap(exchange);
+    const stopLoss = entry / cap;
+    const newSL = (tradeType === 'Long') ? entry - stopLoss : entry + stopLoss;
+    const el = document.getElementById('stop');
+    el.value = formatWithCommas(newSL);
+    calculate();
+  }
+
+  // ---------- core calc ----------
+  function calculate() {
+    updateOutputCommands();
+    updateConnectionBoxes();
+
+    syncEntryWithMarket();
+
+    const margin = cleanNumber(document.getElementById('budget').value);
+    let stop = cleanNumber(document.getElementById('stop').value);
+    let entry = cleanNumber(document.getElementById('entry').value);
+    const tp1ps = parseFloat(document.getElementById('tp1ps').value);
+    const tp2ps = parseFloat(document.getElementById('tp2ps').value);
+    const tpxps = parseFloat(document.getElementById('tpxps').value);
+    const tradeType = document.getElementById('tradeType').value; // Long/Short
+    const exchange = document.getElementById('exchange').value;
+    const strategy = document.getElementById('strategy').value;
+
+    if (strategy === 'Quick Setup') {
+      syncQuickDivFromMarketB();
+    }
+
+    // Quick Setup midpoint (entry = midpoint of divPrice & boxPrice)
+    if (strategy === 'Quick Setup') {
+      const divPrice = cleanNumber(document.getElementById('divPrice').value);
+      const boxPrice = cleanNumber(document.getElementById('boxPrice').value);
+      if (!isNaN(divPrice) && !isNaN(boxPrice)) {
+        const mid = (divPrice + boxPrice) / 2;
+        if (isFinite(mid)) {
+          entry = mid;
+          const entryEl = document.getElementById('entry');
+          entryEl.value = formatWithCommas(mid);
+          syncMarketWithEntry(mid);
+        }
+      }
+    }
+
+    // Guard: need core inputs
+    if (isNaN(margin) || margin <= 0 || isNaN(entry) || isNaN(stop)) {
+      const btn = document.getElementById('updateSLBtn');
+      if (btn) btn.disabled = !document.getElementById('safestSL').value;
+      document.getElementById('output-table').innerHTML = '';
+      document.getElementById('tp-table').innerHTML = '';
+      document.getElementById('scriptBox').value = '';
+      const exitBox = document.getElementById('exitScriptBox');
+      if (exitBox) exitBox.value = '';
+      return;
+    }
+
+    const stopLoss = Math.abs(entry - stop);
+    if (!isFinite(stopLoss) || stopLoss <= 0) {
+      document.getElementById('output-table').innerHTML = '';
+      document.getElementById('tp-table').innerHTML = '';
+      document.getElementById('scriptBox').value = '';
+      const exitBox = document.getElementById('exitScriptBox');
+      if (exitBox) exitBox.value = '';
+      return;
+    }
+
+    // Raw leverage (based on actual SL provided)
+    let rawMaxLeverage = entry / stopLoss;
+    const levCap = getLeverageCap(exchange);
+    const isBybit = (exchange === 'Bybit perpetual' || exchange === 'Bybit perpetual testnet');
+
+    // Binance: floor to lowest integer; else keep raw
+    let effectiveLeverage = (exchange === 'Binance perpetual testnet') ? Math.floor(rawMaxLeverage) : rawMaxLeverage;
+    if (!isFinite(effectiveLeverage) || effectiveLeverage < 1) effectiveLeverage = 1;
+    if (effectiveLeverage > levCap) effectiveLeverage = levCap;
+
+    const totalNotional = margin * effectiveLeverage;
+    const levTooHigh = rawMaxLeverage > levCap;
+    const displayLeverageValue = (levTooHigh && isBybit) ? rawMaxLeverage : effectiveLeverage;
+    const leverageDisplay = formatLeverageForExchange(displayLeverageValue, exchange);
+
+    // Effective stop & percent
+    const effStopLoss = entry / effectiveLeverage;
+    const effStopLossPercent = effStopLoss / entry;
+
+    // Position sizing from TOTAL BUDGET
+    const fullPositionSize = totalNotional / entry;   // base size preview
+    const marginRequired = margin;
+    const totalOrderSize = totalNotional;
+
+    // TP min prices & max chase from effective stop percent
+    let tp1, tp2, maxChase;
+    if (tradeType === 'Long') {
+      tp1 = entry + (effStopLossPercent * entry);
+      tp2 = entry + (effStopLossPercent * 3 * entry);
+      maxChase = entry + (effStopLossPercent * entry) / 2;
+    } else {
+      tp1 = entry - (effStopLossPercent * entry);
+      tp2 = entry - (effStopLossPercent * 3 * entry);
+      maxChase = entry - (effStopLossPercent * entry) / 2;
+    }
+
+    const tp1psBTC = fullPositionSize * (tp1ps / 100);
+    const tp2psBTC = fullPositionSize * (tp2ps / 100);
+    const tpxpsBTC = fullPositionSize * (tpxps / 100);
+
+    // Leverage warning button based on RAW (actual) leverage
+    const levHeader = levTooHigh
+      ? '<button type="button" class="lev-cap-btn" onclick="lowerSLToCap()">Update SL</button>'
+      : 'Max Lev';
+
+    // Margin summary
+    document.getElementById('output-table').innerHTML = `
+      <table>
+        <tr>
+          <th>${levHeader}</th>
+          <th>Margin <span class="usdt">(USDT)</span></th>
+          <th>Total Order Size <span class="usdt">(USDT)</span></th>
+          <th>Max Chase Price</th>
+        </tr>
+        <tr>
+          <td class="small">${leverageDisplay}x</td>
+          <td class="small">${formatWithCommas(marginRequired)}</td>
+          <td class="small">${formatWithCommas(totalOrderSize)}</td>
+          <td class="small">${formatWithCommas(maxChase)}</td>
+        </tr>
+      </table>`;
+
+    document.getElementById('tp-table').innerHTML = `
+      <table>
+        <tr>
+          <th></th>
+          <th>TP1</th>
+          <th>TP2</th>
+          <th>TPx</th>
+        </tr>
+        <tr>
+          <th>Min Price <span class="usdt">(USDT)</span></th>
+          <td class="small">${formatWithCommas(tp1)}</td>
+          <td class="small">${formatWithCommas(tp2)}</td>
+          <td class="small"></td>
+        </tr>
+        <tr>
+          <th>PS <span class="btc">(BTC)</span></th>
+          <td class="small">${tp1psBTC.toLocaleString(undefined, { maximumFractionDigits: 6 })}</td>
+          <td class="small">${tp2psBTC.toLocaleString(undefined, { maximumFractionDigits: 6 })}</td>
+          <td class="small">${tpxpsBTC.toLocaleString(undefined, { maximumFractionDigits: 6 })}</td>
+        </tr>
+      </table>`;
+
+    // ===== Safest SL calculator (Long = max, Short = min) =====
+    {
+      const expTP1 = cleanNumber(document.getElementById('expTP1').value);
+      const expTP2 = cleanNumber(document.getElementById('expTP2').value);
+      const warnSpan = document.getElementById('safestSLWarn');
+      const safestSLInput = document.getElementById('safestSL');
+
+      const have1 = !isNaN(expTP1) && expTP1 > 0;
+      const have2 = !isNaN(expTP2) && expTP2 > 0;
+
+      let minSL1 = null, minSL2 = null;
+
+      if (have1) {
+        const d1 = Math.abs(expTP1 - entry); // 1R to TP1
+        minSL1 = (tradeType === 'Long') ? (entry - d1) : (entry + d1);
+      }
+      if (have2) {
+        const d2 = Math.abs(expTP2 - entry) / 3; // 3R to TP2
+        minSL2 = (tradeType === 'Long') ? (entry - d2) : (entry + d2);
+      }
+
+      let safestSL = null;
+      const candidates = [minSL1, minSL2].filter(v => v !== null && !isNaN(v));
+      if (candidates.length) {
+        safestSL = (tradeType === 'Long') ? Math.max(...candidates) : Math.min(...candidates);
+      }
+
+      if (safestSL !== null && !isNaN(safestSL)) {
+        safestSLInput.value = formatWithCommas(safestSL);
+        if (!isNaN(stop) && ((tradeType === 'Long' && safestSL > stop) || (tradeType === 'Short' && safestSL < stop))) {
+          warnSpan.textContent = "Safest SL worse than SL (max), don't take the trade";
+        } else {
+          warnSpan.textContent = "";
+        }
+      } else {
+        safestSLInput.value = "";
+        warnSpan.textContent = "";
+      }
+
+      const updateBtn = document.getElementById('updateSLBtn');
+      if (updateBtn) updateBtn.disabled = !safestSLInput.value;
+    }
+
+    // ===== Script autogen =====
+    if (strategy === 'Quick Setup') {
+      buildQuickSetupLadderScript({
+        margin,
+        totalNotional,
+        stop,
+        entry,
+        exchange,
+        tradeType,
+        effectiveLeverage,
+        maxChase,
+      });
+    } else if (strategy === 'Swarm') {
+      buildSwarmScript({
+        margin,
+        totalNotional,
+        stop,
+        entry,
+        exchange,
+        tradeType,
+        effectiveLeverage,
+        maxChase,
+      });
+    } else {
+      document.getElementById('scriptBox').value = '';
+    }
+
+    buildExitScript({
+      margin,
+      totalNotional,
+      stop,
+      entry,
+      exchange,
+      tradeType,
+      effectiveLeverage,
+      maxChase,
+    });
+  }
+
+  function resolvePair() {
+    let p1 = (document.getElementById('pair1').value || 'BTC').trim().toUpperCase();
+    let p2 = (document.getElementById('pair2').value || 'USDT').trim().toUpperCase();
+    p1 = p1.replace(/[^A-Z0-9]/g, '');
+    p2 = p2.replace(/[^A-Z0-9]/g, '');
+    return `${p1}-${p2}`;
+  }
+
+  function resolveConnector(exchange) {
+    if (exchange === 'Bybit perpetual') return 'bybit_perpetual';
+    if (exchange === 'Binance perpetual testnet') return 'binance_perpetual_testnet';
+    if (exchange === 'Bybit perpetual testnet') return 'bybit_perpetual_testnet';
+    return 'kucoin_perpetual';
+  }
+
+  function formatLeverageForExchange(leverage, exchange) {
+    if (!isFinite(leverage) || leverage <= 0) return '1';
+    if (exchange === 'Binance perpetual testnet') {
+      return String(Math.max(1, Math.floor(leverage)));
+    }
+    const rounded = Number(leverage).toFixed(2);
+    return parseFloat(rounded).toString();
+  }
+
+  function getLeverageCap(exchange) {
+    if (exchange === 'Bybit perpetual' || exchange === 'Bybit perpetual testnet') {
+      return 100;
+    }
+    return 125;
+  }
+
+  function fallbackPrecisionsFor(connector) {
+    if (connector === 'bybit_perpetual_testnet' || connector === 'bybit_perpetual') {
+      return { priceTick: '0.5', sizeStep: '0.001' };
+    }
+    return { priceTick: '0.10', sizeStep: '0.001' };
+  }
+
+  const BYBIT_MAINNET_DEFAULTS = {
+    apiKey: '',
+    apiSecret: '',
+    createUrl: 'https://api.bybit.com/v5/order/create',
+    cancelUrl: 'https://api.bybit.com/v5/order/cancel',
+    comments: []
+  };
+
+  const BYBIT_TESTNET_DEFAULTS = {
+    apiKey: '',
+    apiSecret: '',
+    createUrl: 'https://api-demo.bybit.com/v5/order/create',
+    cancelUrl: 'https://api-demo.bybit.com/v5/order/cancel',
+    comments: []
+  };
+
+  function resolveBybitConfig({ connector = '', exchangeName = '', subaccount = '' } = {}) {
+    const lower = (connector || '').toLowerCase();
+    const exchange = exchangeName || '';
+    const sub = subaccount || '';
+    const stored = getStoredApiCredentials(exchange, sub);
+    const key = stored.key || '';
+    const secret = stored.secret || '';
+
+    if (!lower.includes('bybit')) {
+      const base = { ...BYBIT_MAINNET_DEFAULTS };
+      return {
+        ...base,
+        apiKey: key,
+        apiSecret: secret,
+        createUrl: '',
+        cancelUrl: '',
+        comments: [...(BYBIT_MAINNET_DEFAULTS.comments || [])]
+      };
+    }
+
+    if (lower.includes('testnet')) {
+      const base = { ...BYBIT_TESTNET_DEFAULTS };
+      return {
+        ...base,
+        apiKey: key,
+        apiSecret: secret,
+        comments: [...(BYBIT_TESTNET_DEFAULTS.comments || [])]
+      };
+    }
+
+    const base = { ...BYBIT_MAINNET_DEFAULTS };
+    return {
+      ...base,
+      apiKey: key,
+      apiSecret: secret,
+      comments: [...(BYBIT_MAINNET_DEFAULTS.comments || [])]
+    };
+  }
+
+  function buildSwarmScript(ctx) {
+    const { tpVals, fracs } = gatherSwarmTPsAndFracs();
+
+    const required = [ctx.totalNotional, ctx.stop, ctx.entry, ctx.maxChase, ctx.effectiveLeverage];
+    if (required.some(v => v === undefined || v === null || isNaN(v) || v <= 0)) {
+      document.getElementById('scriptBox').value = '';
+      return;
+    }
+
+    const trading_pair = resolvePair();
+    const connector = resolveConnector(ctx.exchange);
+    const subaccountEl = document.getElementById('subaccount');
+    const bybitSubaccount = subaccountEl ? subaccountEl.value : '';
+    const { priceTick, sizeStep } = fallbackPrecisionsFor(connector);
+    const leverageStr = formatLeverageForExchange(ctx.effectiveLeverage, ctx.exchange);
+    const side = (ctx.tradeType === 'Short') ? 'short' : 'long';
+
+    const slEpBufferFraction = getBufferFractionById('slEpBuffer', 0.3);
+
+    const script = swarmTemplate({
+      connector,
+      trading_pair,
+      side,
+      total_quote_budget: toDecimalStr(ctx.totalNotional),
+      n_orders: 5,
+      price_floor: toDecimalStr(ctx.entry),
+      price_ceiling: toDecimalStr(ctx.entry),
+      price_cap: toDecimalStr(ctx.maxChase),
+      priceSL: toDecimalStr(ctx.stop),
+      tp_prices: tpVals.map(v => toDecimalStr(v)),
+      tp_fracs: fracs,
+      desired_leverage: leverageStr,
+      price_tick_default: priceTick,
+      size_step_default: sizeStep,
+      sl_to_ep_buffer: toDecimalStr(slEpBufferFraction),
+      bybit_subaccount: bybitSubaccount,
+      exchange_name: ctx.exchange,
+    });
+
+    document.getElementById('scriptBox').value = script;
+  }
+
+  function buildExitScript(ctx) {
+    const exitBox = document.getElementById('exitScriptBox');
+    if (!exitBox) return;
+
+    const entryValue = ctx && typeof ctx.entry === 'number' ? ctx.entry : NaN;
+    const stopValue = ctx && typeof ctx.stop === 'number' ? ctx.stop : NaN;
+    const totalNotionalValue = ctx && typeof ctx.totalNotional === 'number' ? ctx.totalNotional : NaN;
+    if (!isFinite(entryValue) || entryValue <= 0 || !isFinite(totalNotionalValue) || totalNotionalValue <= 0) {
+      exitBox.value = '';
+      return;
+    }
+
+    const trading_pair = resolvePair();
+    const connector = resolveConnector(ctx.exchange);
+    const { priceTick, sizeStep } = fallbackPrecisionsFor(connector);
+    const fullPositionSize = totalNotionalValue / entryValue;
+    if (!isFinite(fullPositionSize) || fullPositionSize <= 0) {
+      exitBox.value = '';
+      return;
+    }
+
+    const tp1PercentRaw = parseFloat(document.getElementById('tp1ps').value);
+    const tp2PercentRaw = parseFloat(document.getElementById('tp2ps').value);
+    const tp1Fraction = Number.isFinite(tp1PercentRaw) && tp1PercentRaw > 0 ? tp1PercentRaw / 100 : 0;
+    const tp2Fraction = Number.isFinite(tp2PercentRaw) && tp2PercentRaw > 0 ? tp2PercentRaw / 100 : 0;
+
+    const tp1PositionSize = fullPositionSize * tp1Fraction;
+    const tp2PositionSize = fullPositionSize * tp2Fraction;
+    const expectedOpenSize = Math.max(fullPositionSize - tp1PositionSize - tp2PositionSize, 0);
+
+    const entryLiteral = toDecimalStr(entryValue);
+    const decimalLiteral = (value, fallback = '0') => {
+      const str = toDecimalStr(value);
+      return `Decimal(${JSON.stringify(str || fallback)})`;
+    };
+
+    if (!entryLiteral) {
+      exitBox.value = '';
+      return;
+    }
+
+    const defaultSide = (ctx.tradeType === 'Long') ? 'TradeType.SELL' : 'TradeType.BUY';
+
+    let exitPriceValue = Number.isFinite(stopValue) && stopValue > 0 ? stopValue : entryValue;
+    if (!Number.isFinite(exitPriceValue) || exitPriceValue <= 0) {
+      exitPriceValue = entryValue;
+    }
+    const exitQuantity = expectedOpenSize * 1.2;
+    const exitPriceLiteral = decimalLiteral(exitPriceValue);
+    const exitQuantityLiteral = decimalLiteral(exitQuantity);
+    const script = `
+from decimal import Decimal, ROUND_DOWN, ROUND_UP
+import time
+from hummingbot.strategy.script_strategy_base import ScriptStrategyBase
+from hummingbot.core.data_type.common import OrderType, PositionAction
+from hummingbot.core.event.events import OrderFilledEvent, OrderCancelledEvent, TradeType
+
+
+_PATCHED_BYBIT_STATES = False
+
+
+def _patch_bybit_order_state():
+    global _PATCHED_BYBIT_STATES
+    if _PATCHED_BYBIT_STATES:
+        return
+    try:
+        from hummingbot.connector.derivative.bybit_perpetual import bybit_perpetual_constants as bybit_constants
+    except Exception:
+        _PATCHED_BYBIT_STATES = True
+        return
+    mapping = getattr(bybit_constants, "ORDER_STATE", None)
+    if not isinstance(mapping, dict):
+        _PATCHED_BYBIT_STATES = True
+        return
+    cancel_value = mapping.get("Cancelled") or mapping.get("CANCELLED")
+    if cancel_value is None:
+        try:
+            from hummingbot.core.data_type.in_flight_order import OrderState as _HBOrderState
+        except Exception:
+            try:
+                from hummingbot.core.event.events import OrderState as _HBOrderState
+            except Exception:
+                _HBOrderState = None
+        if _HBOrderState is not None:
+            cancel_value = getattr(_HBOrderState, "CANCELED", getattr(_HBOrderState, "CANCELLED", None))
+    if cancel_value is not None:
+        try:
+            mapping["Deactivated"] = cancel_value
+        except Exception:
+            pass
+    _PATCHED_BYBIT_STATES = True
+
+
+_patch_bybit_order_state()
+
+
+class ExitPositionFiveOrders(ScriptStrategyBase):
+    """Fan the calculator's open exposure across five stop-price limit orders."""
+
+    EXCHANGE = ${JSON.stringify(connector)}
+    PAIR = ${JSON.stringify(trading_pair)}
+    markets = {EXCHANGE: [PAIR]}
+
+    EXIT_SIDE = ${defaultSide}
+    EXIT_PRICE = ${exitPriceLiteral}
+    EXIT_TOTAL_QUANTITY = ${exitQuantityLiteral}
+    ORDER_COUNT = 5
+
+    ENTRY_PRICE = ${decimalLiteral(entryValue)}
+    FULL_POSITION_SIZE = ${decimalLiteral(fullPositionSize)}
+    TP1_POSITION_SIZE = ${decimalLiteral(tp1PositionSize)}
+    TP2_POSITION_SIZE = ${decimalLiteral(tp2PositionSize)}
+    EXPECTED_OPEN_SIZE = ${decimalLiteral(expectedOpenSize)}
+
+    PRICE_TICK_FALLBACK = ${decimalLiteral(priceTick)}
+    SIZE_STEP_FALLBACK = ${decimalLiteral(sizeStep)}
+    DECIMAL_FLOOR = Decimal("1E-8")
+    WAIT_LOG_INTERVAL = 15
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._patch_connector_state()
+        self._price_tick = None
+        self._size_step = None
+        self._order_ids = [None] * self.ORDER_COUNT
+        self._order_states = ["idle"] * self.ORDER_COUNT
+        self._id_to_index = {}
+        self._last_wait_log = 0.0
+        self._last_qty_warning = False
+        self._last_price_warning = False
+        self._last_chunk_warning = False
+        self._exit_complete = False
+
+    def on_tick(self):
+        if self._exit_complete:
+            return
+        conn = self.connectors.get(self.EXCHANGE)
+        if conn is None or not getattr(conn, "ready", True):
+            self._log_waiting(f"{self.EXCHANGE} connector not ready; waiting to submit exit orders")
+            return
+        self._ensure_precisions(conn)
+        total_qty = self._normalize_quantity(self.EXIT_TOTAL_QUANTITY)
+        if total_qty <= 0:
+            if not self._last_qty_warning:
+                self._log_status(f"Exit quantity {self.EXIT_TOTAL_QUANTITY} normalizes to zero; check calculator inputs")
+                self._last_qty_warning = True
+            return
+        self._last_qty_warning = False
+        chunk_qty = self._normalize_quantity(total_qty / Decimal(self.ORDER_COUNT))
+        if chunk_qty <= 0:
+            if not self._last_chunk_warning:
+                self._log_status(f"Exit chunk quantity {total_qty} -> {chunk_qty} normalizes to zero; adjust calculator inputs or size step")
+                self._last_chunk_warning = True
+            return
+        self._last_chunk_warning = False
+        is_buy = self.EXIT_SIDE == TradeType.BUY
+        price = self._determine_price(conn, is_buy)
+        if price <= 0:
+            if not self._last_price_warning:
+                self._log_status("Unable to determine exit price; waiting for market data")
+                self._last_price_warning = True
+            return
+        self._last_price_warning = False
+        self._refresh_order_states(conn)
+        if self._exit_complete:
+            return
+        for idx in range(self.ORDER_COUNT):
+            if self._order_states[idx] != "idle" or self._order_ids[idx]:
+                continue
+            if self.EXIT_SIDE == TradeType.SELL:
+                order_id = self.sell(self.EXCHANGE, self.PAIR, chunk_qty, OrderType.LIMIT, price, position_action=PositionAction.CLOSE)
+            else:
+                order_id = self.buy(self.EXCHANGE, self.PAIR, chunk_qty, OrderType.LIMIT, price, position_action=PositionAction.CLOSE)
+            if order_id:
+                self._order_ids[idx] = order_id
+                self._order_states[idx] = "live"
+                self._id_to_index[order_id] = idx
+                self._log_status(f"Exit order {idx + 1}/{self.ORDER_COUNT} {order_id} submitted at {price} qty={chunk_qty} ({self.EXIT_SIDE.name})")
+        self._check_completion()
+
+    def did_fill_order(self, event: OrderFilledEvent):
+        idx = self._id_to_index.pop(event.order_id, None)
+        if idx is None:
+            return
+        self._order_ids[idx] = None
+        if self._order_states[idx] != "filled":
+            self._order_states[idx] = "filled"
+            self._log_status(f"Exit order {event.order_id} slot {idx + 1}/{self.ORDER_COUNT} filled")
+            self._check_completion()
+
+    def did_cancel_order(self, event: OrderCancelledEvent):
+        idx = self._id_to_index.pop(event.order_id, None)
+        if idx is None:
+            return
+        self._order_ids[idx] = None
+        if self._order_states[idx] != "filled":
+            self._order_states[idx] = "idle"
+            self._log_status(f"Exit order {event.order_id} slot {idx + 1}/{self.ORDER_COUNT} cancelled; will resubmit")
+
+    def _determine_price(self, conn, is_buy: bool) -> Decimal:
+        price = self._round_price(self.EXIT_PRICE, is_buy)
+        if price > 0:
+            return price
+        reference = self._get_reference_price(conn, is_buy)
+        return self._round_price(reference, is_buy)
+
+    def _normalize_quantity(self, amount) -> Decimal:
+        qty = self._safe_decimal(amount)
+        if qty is None or qty <= 0:
+            return Decimal("0")
+        step = self._size_step or self.SIZE_STEP_FALLBACK
+        rounded = qty
+        if step and step > 0:
+            try:
+                steps = (qty / step).quantize(Decimal("1"), rounding=ROUND_DOWN)
+                rounded = steps * step
+            except Exception:
+                rounded = qty
+            if rounded <= 0:
+                rounded = qty
+        try:
+            rounded = rounded.quantize(self.DECIMAL_FLOOR, rounding=ROUND_DOWN)
+        except Exception:
+            pass
+        return rounded if rounded > 0 else Decimal("0")
+
+    def _round_price(self, value, is_buy: bool) -> Decimal:
+        price = self._safe_decimal(value) or Decimal("0")
+        if price <= 0:
+            return Decimal("0")
+        tick = self._price_tick
+        if tick and tick > 0:
+            rounding = ROUND_UP if is_buy else ROUND_DOWN
+            try:
+                steps = (price / tick).quantize(Decimal("1"), rounding=rounding)
+                price = steps * tick
+            except Exception:
+                pass
+        try:
+            price = price.quantize(self.DECIMAL_FLOOR, rounding=ROUND_UP if is_buy else ROUND_DOWN)
+        except Exception:
+            pass
+        return price
+
+    def _get_reference_price(self, conn, is_buy: bool) -> Decimal:
+        price = None
+        try:
+            price = conn.get_price(self.PAIR, is_buy)
+        except Exception:
+            price = None
+        if price is None:
+            try:
+                price = conn.get_mid_price(self.PAIR)
+            except Exception:
+                price = None
+        dec = self._safe_decimal(price)
+        return dec if dec and dec > 0 else Decimal("0")
+
+    def _ensure_precisions(self, conn):
+        if self._price_tick is not None and self._size_step is not None:
+            return
+        price_tick = None
+        size_step = None
+        try:
+            rules = getattr(conn, "trading_rules", None) or getattr(conn, "_trading_rules", None)
+            rule = None
+            if isinstance(rules, dict):
+                rule = rules.get(self.PAIR)
+            elif rules:
+                for candidate in rules:
+                    symbol = getattr(candidate, "trading_pair", getattr(candidate, "symbol", None))
+                    if symbol == self.PAIR:
+                        rule = candidate
+                        break
+            if rule is not None:
+                price_tick = self._safe_decimal(getattr(rule, "min_price_increment", None))
+                size_step = self._safe_decimal(getattr(rule, "min_base_amount_increment", None))
+                if size_step is None:
+                    size_step = self._safe_decimal(getattr(rule, "min_base_amount_step", None))
+        except Exception:
+            pass
+        self._price_tick = price_tick if price_tick and price_tick > 0 else self.PRICE_TICK_FALLBACK
+        self._size_step = size_step if size_step and size_step > 0 else self.SIZE_STEP_FALLBACK
+
+    def _is_order_active(self, conn, order_id: str) -> bool:
+        if not order_id:
+            return False
+        for order in self._fetch_active_orders(conn):
+            if self._order_id_from(order) == order_id:
+                return True
+        return False
+
+    def _fetch_active_orders(self, conn):
+        orders = []
+        try:
+            orders = self.get_active_orders(connector_name=self.EXCHANGE, trading_pair=self.PAIR)
+        except Exception:
+            try:
+                orders = conn.get_open_orders(self.PAIR)
+            except Exception:
+                try:
+                    orders = conn.get_open_orders()
+                except Exception:
+                    orders = []
+        return orders or []
+
+    def _order_id_from(self, order):
+        if order is None:
+            return None
+        for attr in ("client_order_id", "clientOrderID", "clientOrderId", "order_id", "exchange_order_id", "clientId", "id"):
+            value = getattr(order, attr, None)
+            if value:
+                return str(value)
+        try:
+            return str(order.get("client_order_id"))
+        except Exception:
+            pass
+        return None
+
+    def _safe_decimal(self, value):
+        if value is None:
+            return None
+        try:
+            dec = Decimal(str(value))
+        except Exception:
+            return None
+        try:
+            if dec.is_nan():
+                return None
+        except Exception:
+            pass
+        return dec
+
+    def _refresh_order_states(self, conn):
+        if not any(state == "live" for state in self._order_states):
+            return
+        for idx, order_id in enumerate(list(self._order_ids)):
+            if order_id and self._order_states[idx] == "live":
+                if not self._is_order_active(conn, order_id):
+                    self._order_ids[idx] = None
+                    self._order_states[idx] = "idle"
+                    self._id_to_index.pop(order_id, None)
+
+    def _check_completion(self):
+        if self._exit_complete:
+            return
+        if all(state == "filled" for state in self._order_states):
+            self._exit_complete = True
+            self._log_status("All exit orders filled; strategy complete")
+
+    def _log_waiting(self, message: str):
+        now = time.time()
+        if now - self._last_wait_log >= self.WAIT_LOG_INTERVAL:
+            self._log_status(message)
+            self._last_wait_log = now
+
+    def _log_status(self, message: str):
+        try:
+            self.logger().info(message)
+        except Exception:
+            pass
+        try:
+            self.notify_hb_app_with_timestamp(f"[exit] {message}")
+        except Exception:
+            pass
+
+    def _patch_connector_state(self):
+        name = str(getattr(self, "EXCHANGE", "")).lower()
+        if "bybit" in name:
+            _patch_bybit_order_state()
+
+
+ExitPositionFiveOrders.markets = {ExitPositionFiveOrders.EXCHANGE: [ExitPositionFiveOrders.PAIR]}
+`.trim();
+
+    exitBox.value = script;
+  }
+  // ========== SWARM SCRIPT AUTOGEN ==========
+  function gatherSwarmTPsAndFracs() {
+    const tpVals = [
+      cleanNumber(document.getElementById('expTP1').value),
+      cleanNumber(document.getElementById('expTP2').value),
+      cleanNumber(document.getElementById('expTP3').value),
+      cleanNumber(document.getElementById('expTP4').value),
+      cleanNumber(document.getElementById('expTP5').value),
+      cleanNumber(document.getElementById('expTP6').value),
+    ].filter(v => !isNaN(v) && v > 0);
+
+    const tp1ps = parseFloat(document.getElementById('tp1ps').value) || 0;
+    const tp2ps = parseFloat(document.getElementById('tp2ps').value) || 0;
+    const tpxps = parseFloat(document.getElementById('tpxps').value) || 0;
+
+    const fracs = [];
+    for (let i = 0; i < tpVals.length; i++) {
+      if (i === 0) fracs.push(tp1ps / 100);
+      else if (i === 1) fracs.push(tp2ps / 100);
+      else fracs.push(tpxps / 100);
+    }
+    return { tpVals, fracs };
+  }
+
+  function swarmTemplate(params) {
+    const quickScript = quickSetupTemplate({
+      connector: params.connector,
+      trading_pair: params.trading_pair,
+      side: params.side,
+      total_quote_budget: params.total_quote_budget,
+      n_orders: params.n_orders,
+      price_floor: params.price_floor,
+      price_ceiling: params.price_ceiling,
+      price_cap: params.price_cap,
+      priceSL: params.priceSL,
+      tp_prices: params.tp_prices,
+      tp_fracs: params.tp_fracs,
+      desired_leverage: params.desired_leverage,
+      price_tick_default: params.price_tick_default,
+      size_step_default: params.size_step_default,
+      sl_to_ep_buffer: params.sl_to_ep_buffer,
+      normalize_tp_fracs: false,
+      bybit_subaccount: params.bybit_subaccount,
+      exchange_name: params.exchange_name,
+    });
+
+    return quickScript
+      .replace(/QuickSetupLadderTPSL/g, 'SwarmLadderTPSL')
+      .replace(/QuickSetup/g, 'Swarm')
+      .replace(/Quick-setup/g, 'Swarm')
+      .replace(/quick_setup/g, 'swarm');
+  }
+
+  // ========== QUICK SETUP SCRIPT AUTOGEN (LADDER) ==========
+  function gatherQuickSetupTPsAndFracs() {
+    const tpVals = [
+      cleanNumber(document.getElementById('expTP1').value),
+      cleanNumber(document.getElementById('expTP2').value),
+      cleanNumber(document.getElementById('expTP3').value),
+      cleanNumber(document.getElementById('expTP4').value),
+      cleanNumber(document.getElementById('expTP5').value),
+      cleanNumber(document.getElementById('expTP6').value),
+    ].filter(v => !isNaN(v) && v > 0);
+
+    const tp1ps = parseFloat(document.getElementById('tp1ps').value) || 0;
+    const tp2ps = parseFloat(document.getElementById('tp2ps').value) || 0;
+    const tpxps = parseFloat(document.getElementById('tpxps').value) || 0;
+
+    const fracs = [];
+    for (let i = 0; i < tpVals.length; i++) {
+      if (i === 0) fracs.push(tp1ps / 100);
+      else if (i === 1) fracs.push(tp2ps / 100);
+      else fracs.push(tpxps / 100);
+    }
+    return { tpVals, fracs };
+  }
+
+  function quickSetupTemplate(params) {
+    const {
+      connector, trading_pair, side,
+      total_quote_budget, n_orders,
+      price_floor, price_ceiling, price_cap,
+      priceSL, tp_prices, tp_fracs, desired_leverage,
+      price_tick_default, size_step_default,
+      sl_to_ep_buffer,
+      normalize_tp_fracs = true,
+      bybit_subaccount = '',
+      exchange_name = '',
+    } = params;
+
+    const dec = (value) => `Decimal(${JSON.stringify(value)})`;
+    const pyTpPrices = tp_prices.map(v => dec(v)).join(', ');
+    const pyTpFracs = tp_fracs.map(v => dec(Number(v).toFixed(6))).join(', ');
+    const normalizeFracsLiteral = normalize_tp_fracs ? 'True' : 'False';
+
+    const {
+      createUrl: bybitCreate,
+      cancelUrl: bybitCancel,
+      apiKey: bybitApiKeyDefault,
+      apiSecret: bybitApiSecretDefault,
+      comments: bybitEnvComments
+    } = resolveBybitConfig({ connector, exchangeName: exchange_name, subaccount: bybit_subaccount });
+    const bybitEnvCommentBlock = bybitEnvComments.length
+      ? bybitEnvComments.map(line => `    ${line}`).join('\n') + '\n'
+      : '';
+
+    const desiredLevLiteral = JSON.stringify(String(desired_leverage || ''));
+
+    return `
+from decimal import Decimal, ROUND_DOWN, ROUND_UP
+import os, time, hmac, hashlib, json
+from hummingbot.strategy.script_strategy_base import ScriptStrategyBase
+from hummingbot.core.data_type.common import OrderType, PositionAction
+from hummingbot.core.event.events import OrderFilledEvent, TradeType
+
+try:
+    from hummingbot.connector.derivative.bybit_perpetual import bybit_perpetual_constants as _BYBIT_CONSTANTS
+    from hummingbot.core.data_type.in_flight_order import OrderState as _HBOrderState
+    if hasattr(_BYBIT_CONSTANTS, "ORDER_STATE"):
+        _BYBIT_CONSTANTS.ORDER_STATE.setdefault("Untriggered", _HBOrderState.OPEN)
+        _BYBIT_CONSTANTS.ORDER_STATE.setdefault("Triggered", _HBOrderState.OPEN)
+except Exception:
+    pass
+
+
+class QuickSetupLadderTPSL(ScriptStrategyBase):
+    EXCHANGE = ${JSON.stringify(connector)}
+    PAIR = ${JSON.stringify(trading_pair)}
+    markets = {EXCHANGE: [PAIR]}
+    SIDE = ${JSON.stringify(side)}
+
+    TOTAL_QUOTE_BUDGET = ${dec(total_quote_budget)}
+    N_ORDERS = ${n_orders}
+    PRICE_FLOOR = ${dec(price_floor)}
+    PRICE_CEILING = ${dec(price_ceiling)}
+    PRICE_CAP = ${dec(price_cap)}
+
+    PRICE_SL = ${dec(priceSL)}
+    TP_PRICES = [${pyTpPrices}]
+    TP_FRACS = [${pyTpFracs}]
+    TP_NORMALIZE_FRACS = ${normalizeFracsLiteral}
+
+    DESIRED_LEVERAGE = ${desiredLevLiteral}
+    PRICE_TICK_DEFAULT = ${dec(price_tick_default)}
+    SIZE_STEP_DEFAULT = ${dec(size_step_default)}
+
+${bybitEnvCommentBlock}    BYBIT_API_KEY = os.getenv("BYBIT_TN_API_KEY") or os.getenv("BYBIT_API_KEY") or "${bybitApiKeyDefault}"
+    BYBIT_API_SECRET = os.getenv("BYBIT_TN_API_SECRET") or os.getenv("BYBIT_API_SECRET") or "${bybitApiSecretDefault}"
+    BYBIT_V5_CREATE = ${JSON.stringify(bybitCreate)}
+    BYBIT_V5_CANCEL = ${JSON.stringify(bybitCancel)}
+    BYBIT_CATEGORY = "linear"
+    SL_ORDER_TYPE = "Market"
+    SL_TRIGGER_BY = "LastPrice"
+    SL_TIME_IN_FORCE = "GTC"
+    SL_REDUCE_ONLY = True
+    SL_POSITION_IDX = 0
+    SL_MARKET_OFFSET_PCT = Decimal("0.0001")
+    sl_to_ep_buffer = Decimal("${sl_to_ep_buffer ?? '0'}")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._initialized = False
+        self._price_tick = None
+        self._size_step = None
+        self._ladder_seeded = False
+        self._ladder_order_ids = set()
+        self._filled_base = Decimal("0")
+        self._spent_quote = Decimal("0")
+        self._tp_targets = []
+        self._tp_prices = []
+        self._tp_fracs = []
+        self._tp_ids = []
+        self._tp_expected_qty = []
+        self._tp_expected_price = []
+        self._tp_completed = []
+        self._tp_seed_queue = []
+        self._tp_last_action_ts = 0.0
+        self._tp_last_queue_due = 0.0
+        self._tp_reference_base = Decimal("0")
+        self._next_tp_check_ts = None
+        self._active_tp_index = None
+        self._next_tp_index = 0
+        self._tp_sequence_started = False
+        self._tps_seeded = False
+        self._sl_order_id = None
+        self._sl_link_id = None
+        self._current_stop_trigger = None
+        self._desired_stop_trigger = self._decimal_or_zero(self.PRICE_SL)
+        self._tp1_hit = False
+        self._cancelled_ladder_after_tp1 = False
+        self._prepare_targets()
+
+    # ----- helpers -----
+
+    def _log(self, message: str):
+        try:
+            self.logger().info(message)
+        except Exception:
+            pass
+        try:
+            self.notify_hb_app_with_timestamp(f"[ladder] {message}")
+        except Exception:
+            pass
+
+    def _is_long(self) -> bool:
+        return self.SIDE.lower() == "long"
+
+    def _sl_side(self) -> str:
+        return "Sell" if self._is_long() else "Buy"
+
+    def _sl_trigger_direction(self) -> int:
+        return 2 if self._is_long() else 1
+
+    def _prepare_targets(self):
+        self._tp_targets = []
+        for px, frac in zip(self.TP_PRICES, self.TP_FRACS):
+            try:
+                price_d = Decimal(str(px))
+                frac_d = Decimal(str(frac))
+            except Exception:
+                continue
+            if price_d <= 0 or frac_d <= 0:
+                continue
+            self._tp_targets.append({"price": price_d, "frac": frac_d})
+        normalize = getattr(self, "TP_NORMALIZE_FRACS", True)
+        if normalize:
+            total = sum(t["frac"] for t in self._tp_targets)
+            if total > 0:
+                for t in self._tp_targets:
+                    t["frac"] = t["frac"] / total
+        self._tp_prices = [t["price"] for t in self._tp_targets]
+        self._tp_fracs = [t["frac"] for t in self._tp_targets]
+        self._ensure_tp_tracking()
+
+    def _ensure_tp_tracking(self):
+        count = len(self._tp_prices)
+        if len(self._tp_ids) < count:
+            self._tp_ids.extend([None] * (count - len(self._tp_ids)))
+        elif len(self._tp_ids) > count:
+            self._tp_ids = self._tp_ids[:count]
+        if len(self._tp_expected_qty) < count:
+            self._tp_expected_qty.extend(Decimal("0") for _ in range(count - len(self._tp_expected_qty)))
+        elif len(self._tp_expected_qty) > count:
+            self._tp_expected_qty = self._tp_expected_qty[:count]
+        if len(self._tp_expected_price) < count:
+            self._tp_expected_price.extend(Decimal("0") for _ in range(count - len(self._tp_expected_price)))
+        elif len(self._tp_expected_price) > count:
+            self._tp_expected_price = self._tp_expected_price[:count]
+        if len(self._tp_completed) < count:
+            self._tp_completed.extend(False for _ in range(count - len(self._tp_completed)))
+        elif len(self._tp_completed) > count:
+            self._tp_completed = self._tp_completed[:count]
+
+    def _update_tp_reference_base(self, base_qty: Decimal):
+        try:
+            base_val = Decimal(str(base_qty))
+        except Exception:
+            base_val = Decimal("0")
+        if base_val <= 0:
+            return
+        current = getattr(self, "_tp_reference_base", Decimal("0"))
+        if current <= 0 or base_val > current:
+            self._tp_reference_base = base_val
+
+    def _reset_tp_queue_timing(self):
+        now = float(self.current_timestamp)
+        self._tp_last_action_ts = now
+        self._tp_last_queue_due = now
+
+    def _update_tp_last_queue_due(self):
+        if self._tp_seed_queue:
+            try:
+                self._tp_last_queue_due = max(float(task.get("due", float(self.current_timestamp))) for task in self._tp_seed_queue)
+            except Exception:
+                self._tp_last_queue_due = float(self.current_timestamp)
+        else:
+            now = float(self.current_timestamp)
+            last_action = getattr(self, "_tp_last_action_ts", 0.0) or 0.0
+            self._tp_last_queue_due = max(now, last_action)
+
+    def _effective_stop_trigger(self) -> Decimal:
+        trigger = getattr(self, "_desired_stop_trigger", None)
+        if trigger is None or trigger <= 0:
+            trigger = self._decimal_or_zero(self.PRICE_SL)
+        return trigger if trigger and trigger > 0 else Decimal("0")
+
+    def _move_stop_to_break_even(self):
+        if self._filled_base <= 0:
+            return
+        try:
+            avg_entry = self._spent_quote / self._filled_base if self._filled_base else Decimal("0")
+        except Exception:
+            avg_entry = Decimal("0")
+        if avg_entry <= 0:
+            avg_entry = self._decimal_or_zero(self.PRICE_SL)
+        if avg_entry <= 0:
+            return
+        buffer = getattr(self, "sl_to_ep_buffer", None)
+        if buffer is None:
+            buffer = Decimal("0")
+        target = self._break_even_trigger(avg_entry)
+        if target <= 0:
+            return
+        self._desired_stop_trigger = target
+        try:
+            self._post_or_update_independent_sl(target, self._filled_base)
+            direction = "+" if self._is_long() else "-"
+            pct = buffer * Decimal("100")
+            pct_str = format(pct.normalize(), "f") if pct != 0 else "0"
+            if "." in pct_str:
+                pct_str = pct_str.rstrip("0").rstrip(".")
+            self._log(f"Moved SL to avg entry {direction}{pct_str}% at {target}")
+        except Exception as e:
+            self._log(f"SL move error after TP1 fill: {e}")
+
+    def _cancel_remaining_ladder_orders(self):
+        if getattr(self, "_cancelled_ladder_after_tp1", False):
+            return
+        if not self._ladder_order_ids:
+            self._cancelled_ladder_after_tp1 = True
+            return
+        cancelled = 0
+        for oid in list(self._ladder_order_ids):
+            try:
+                self.cancel(self.EXCHANGE, self.PAIR, oid)
+                cancelled += 1
+            except Exception as e:
+                self._log(f"Failed to cancel ladder order {oid}: {e}")
+            finally:
+                self._ladder_order_ids.discard(oid)
+        if cancelled > 0:
+            self._log(f"Cancelled {cancelled} ladder orders after TP1 fill")
+        self._cancelled_ladder_after_tp1 = True
+
+    def _round_up_size(self, sz: Decimal) -> Decimal:
+        if sz is None:
+            return Decimal("0")
+        try:
+            sz_val = Decimal(str(sz))
+        except Exception:
+            return Decimal("0")
+        if sz_val <= 0:
+            return Decimal("0")
+        step = self._size_step if self._size_step and self._size_step > 0 else Decimal("0.001")
+        if step < Decimal("0.001"):
+            step = Decimal("0.001")
+        multiples = (sz_val / step).to_integral_value(rounding=ROUND_UP)
+        rounded = multiples * step
+        min_size = max(step, Decimal("0.001"))
+        if rounded < min_size:
+            rounded = min_size
+        return rounded
+
+    def _compute_tp_sizes(self, base_qty: Decimal):
+        sizes = []
+        try:
+            remaining = Decimal(str(base_qty))
+        except Exception:
+            remaining = Decimal("0")
+        if remaining < 0:
+            remaining = Decimal("0")
+        reference = getattr(self, "_tp_reference_base", remaining)
+        try:
+            reference = Decimal(str(reference))
+        except Exception:
+            reference = remaining
+        if reference <= 0:
+            reference = remaining
+        closed = reference - remaining
+        if closed < 0:
+            closed = Decimal("0")
+        allocated = Decimal("0")
+        cumulative = Decimal("0")
+        min_size = Decimal("0.001")
+        for i, frac in enumerate(self._tp_fracs):
+            try:
+                frac_val = Decimal(str(frac))
+            except Exception:
+                frac_val = Decimal("0")
+            if frac_val <= 0 or reference <= 0:
+                sizes.append(Decimal("0"))
+                continue
+            cumulative += frac_val
+            target_total_closed = reference * cumulative
+            desired_qty = target_total_closed - closed - allocated
+            available = remaining - allocated
+            if available < 0:
+                available = Decimal("0")
+            if desired_qty <= 0 or available <= 0:
+                sizes.append(Decimal("0"))
+                continue
+            qty = desired_qty
+            if i == len(self._tp_fracs) - 1 and available > 0:
+                qty = max(qty, available)
+            if qty > available:
+                qty = available
+            rounded = self._round_up_size(qty)
+            if rounded > available:
+                rounded = available
+            if rounded < min_size and available >= min_size:
+                rounded = min_size if min_size <= available else available
+            if rounded <= 0:
+                rounded = Decimal("0")
+            sizes.append(rounded)
+            allocated += rounded
+        while len(sizes) < len(self._tp_prices):
+            sizes.append(Decimal("0"))
+        return sizes
+
+    def _enqueue_tp_task(self, action: str, idx: int, delay: float, price: Decimal = None, qty: Decimal = None):
+        self._ensure_tp_tracking()
+        if self._tp_seed_queue is None:
+            self._tp_seed_queue = []
+        now = float(self.current_timestamp)
+        last_action = getattr(self, "_tp_last_action_ts", 0.0) or 0.0
+        last_queue = getattr(self, "_tp_last_queue_due", 0.0) or 0.0
+        base = max(last_action, last_queue)
+        desired = now + max(0.0, float(delay))
+        min_due = base + 1.0 if base > 0 else desired
+        due = max(desired, min_due, now)
+        task = {"action": action, "index": idx, "due": due}
+        if price is not None:
+            task["price"] = price
+        if qty is not None:
+            task["qty"] = qty
+        self._tp_seed_queue.append(task)
+        self._tp_last_queue_due = max(self._tp_last_queue_due, due)
+
+    def _queue_tp_replacement(self, idx: int, price: Decimal, qty: Decimal, initial_delay: float = 0.0):
+        self._ensure_tp_tracking()
+        if self._tp_seed_queue:
+            before = len(self._tp_seed_queue)
+            self._tp_seed_queue = [task for task in self._tp_seed_queue if task.get("index") != idx]
+            if len(self._tp_seed_queue) != before:
+                self._update_tp_last_queue_due()
+        has_existing = idx < len(self._tp_ids) and self._tp_ids[idx]
+        delay = max(initial_delay, 0.0)
+        if qty is None:
+            qty = Decimal("0")
+        if qty <= 0:
+            if has_existing:
+                self._enqueue_tp_task("cancel", idx, delay)
+            return
+        if has_existing:
+            self._enqueue_tp_task("cancel", idx, delay)
+            self._enqueue_tp_task("place", idx, 1.0, price, qty)
+        else:
+            self._enqueue_tp_task("place", idx, delay, price, qty)
+
+    def _process_tp_seed_queue(self):
+        if not self._tp_seed_queue:
+            self._update_tp_last_queue_due()
+            return
+        self._tp_seed_queue.sort(key=lambda t: t.get("due", 0))
+        task = self._tp_seed_queue[0]
+        now = self.current_timestamp
+        if task.get("due", 0) > now:
+            return
+        idx = task.get("index")
+        action = task.get("action", "place")
+        success = False
+        if idx is None or idx < 0:
+            success = True
+            self._tp_seed_queue.pop(0)
+            self._update_tp_last_queue_due()
+        elif action == "cancel":
+            oid = self._tp_ids[idx] if idx < len(self._tp_ids) else None
+            success = True
+            if oid:
+                try:
+                    self.cancel(self.EXCHANGE, self.PAIR, oid)
+                except Exception:
+                    success = False
+            if success:
+                if idx < len(self._tp_ids):
+                    self._tp_ids[idx] = None
+                if self._active_tp_index == idx:
+                    self._active_tp_index = None
+                note = "cancelled" if oid else "no live order to cancel"
+                self._log(f"TP{idx + 1} {note}")
+                self._tp_seed_queue.pop(0)
+                self._tp_last_action_ts = float(now)
+                self._update_tp_last_queue_due()
+            else:
+                task["due"] = now + 1.0
+                self._tp_last_queue_due = max(self._tp_last_queue_due, float(task["due"]))
+        else:
+            price = task.get("price")
+            qty = task.get("qty", Decimal("0"))
+            if qty <= 0 or price is None:
+                self._log(f"TP{idx + 1} skipped due to zero qty at {price}")
+                if idx < len(self._tp_ids):
+                    self._tp_ids[idx] = None
+                self._tp_seed_queue.pop(0)
+                success = True
+                self._tp_last_action_ts = float(now)
+                self._update_tp_last_queue_due()
+            else:
+                qty = self._round_up_size(qty)
+                try:
+                    if self._is_long():
+                        oid = self.sell(self.EXCHANGE, self.PAIR, qty, OrderType.LIMIT, price, position_action=PositionAction.CLOSE)
+                    else:
+                        oid = self.buy(self.EXCHANGE, self.PAIR, qty, OrderType.LIMIT, price, position_action=PositionAction.CLOSE)
+                except Exception:
+                    oid = None
+                if oid:
+                    self._tp_ids[idx] = oid
+                    self._ensure_tp_tracking()
+                    self._tp_expected_qty[idx] = qty
+                    self._tp_expected_price[idx] = price
+                    if idx < len(self._tp_completed):
+                        self._tp_completed[idx] = False
+                    self._active_tp_index = idx
+                    self._next_tp_index = idx
+                    self._log(f"TP{idx + 1} order {oid} live at {price} qty {qty}")
+                    self._tp_seed_queue.pop(0)
+                    success = True
+                    self._tp_last_action_ts = float(now)
+                    self._update_tp_last_queue_due()
+                else:
+                    self._log(f"TP{idx + 1} placement failed at {price} qty {qty} -> retrying in 1s")
+                    task["due"] = now + 1.0
+                    self._tp_last_queue_due = max(self._tp_last_queue_due, float(task["due"]))
+        if success and not self._tp_seed_queue:
+            self._tps_seeded = True
+            active = sum(1 for oid in self._tp_ids if oid)
+            self._log(f"Seeded {active} TP orders")
+
+    def _maybe_schedule_tp_check(self):
+        if self._filled_base <= 0 or not self._tp_prices:
+            self._next_tp_check_ts = None
+            return
+        if self._next_tp_check_ts is None:
+            self._next_tp_check_ts = self.current_timestamp + 30.0
+
+    def _verify_tp_orders(self):
+        if self._filled_base <= 0 or not self._tp_prices:
+            self._next_tp_check_ts = None
+            return
+        self._ensure_tp_tracking()
+        sizes = self._compute_tp_sizes(self._filled_base)
+        size_tol = self._size_step if self._size_step else Decimal("0.00000001")
+        idx = self._current_tp_slot()
+        if idx is None:
+            self._next_tp_check_ts = None
+            return
+        qty_expected = sizes[idx] if idx < len(sizes) else Decimal("0")
+        price_expected = self._snap_price(self._tp_prices[idx])
+        if idx < len(self._tp_expected_qty):
+            self._tp_expected_qty[idx] = qty_expected
+        if idx < len(self._tp_expected_price):
+            self._tp_expected_price[idx] = price_expected
+        if qty_expected <= 0:
+            if idx < len(self._tp_completed):
+                self._tp_completed[idx] = True
+            if idx < len(self._tp_ids):
+                self._tp_ids[idx] = None
+            if self._active_tp_index == idx:
+                self._active_tp_index = None
+            self._next_tp_index = idx + 1
+            self._schedule_current_tp(self._filled_base, 0.0)
+            return
+        oid = self._tp_ids[idx] if idx < len(self._tp_ids) else None
+        order_obj = None
+        conn = self.connectors.get(self.EXCHANGE)
+        inflight = None
+        if conn is not None:
+            inflight = getattr(conn, "in_flight_orders", None)
+            if inflight is None:
+                inflight = getattr(conn, "_in_flight_orders", None)
+        if isinstance(inflight, dict) and oid:
+            order_obj = inflight.get(oid)
+        order_ok = False
+        if order_obj is not None:
+            amount_attr = getattr(order_obj, "quantity", None)
+            if amount_attr is None:
+                amount_attr = getattr(order_obj, "amount", None)
+            price_attr = getattr(order_obj, "price", None)
+            try:
+                amt_dec = Decimal(str(amount_attr)) if amount_attr is not None else None
+            except Exception:
+                amt_dec = None
+            try:
+                price_dec = Decimal(str(price_attr)) if price_attr is not None else None
+            except Exception:
+                price_dec = None
+            if amt_dec is not None and abs(amt_dec - qty_expected) <= size_tol * Decimal("2"):
+                order_ok = True
+                if price_dec is not None and idx < len(self._tp_expected_price):
+                    # preserve any manual TP price adjustments by tracking the live order price
+                    self._tp_expected_price[idx] = price_dec
+        if order_ok:
+            return
+        self._log(f"TP{idx + 1} missing or incorrect -> resubmitting")
+        delay = 0.0 if oid else 1.0
+        self._queue_tp_replacement(idx, price_expected, qty_expected, delay)
+        self._tps_seeded = False
+
+    def _cancel_all_tps(self):
+        if any(self._tp_ids):
+            self._log("Cancelling all TP orders")
+        for oid in self._tp_ids:
+            if oid:
+                try:
+                    self.cancel(self.EXCHANGE, self.PAIR, oid)
+                except Exception:
+                    pass
+        self._tp_ids = [None] * len(self._tp_prices)
+        self._tps_seeded = False
+        self._ensure_tp_tracking()
+        self._tp_expected_qty = [Decimal("0")] * len(self._tp_prices)
+        self._tp_expected_price = [Decimal("0")] * len(self._tp_prices)
+        self._tp_completed = [False] * len(self._tp_prices)
+        self._tp_seed_queue = []
+        self._reset_tp_queue_timing()
+        self._next_tp_check_ts = None
+        self._active_tp_index = None
+        self._next_tp_index = 0
+        self._tp_sequence_started = False
+
+    def _current_tp_slot(self):
+        idx = self._active_tp_index if self._active_tp_index is not None else self._next_tp_index
+        if idx is None:
+            idx = 0
+        if idx < 0:
+            idx = 0
+        while idx < len(self._tp_prices) and idx < len(self._tp_completed) and self._tp_completed[idx]:
+            idx += 1
+        if idx >= len(self._tp_prices):
+            return None
+        if self._next_tp_index != idx:
+            self._next_tp_index = idx
+        return idx
+
+    def _schedule_current_tp(self, base_qty: Decimal, initial_delay: float):
+        self._ensure_tp_tracking()
+        self._update_tp_reference_base(base_qty)
+        if self._tp_seed_queue is None:
+            self._tp_seed_queue = []
+        idx = self._current_tp_slot()
+        if idx is None:
+            self._maybe_schedule_tp_check()
+            return
+        sizes = self._compute_tp_sizes(base_qty)
+        for i in range(len(self._tp_expected_qty)):
+            self._tp_expected_qty[i] = sizes[i] if i < len(sizes) else Decimal("0")
+        for i in range(len(self._tp_expected_price)):
+            self._tp_expected_price[i] = self._snap_price(self._tp_prices[i]) if i < len(self._tp_prices) else Decimal("0")
+        price = self._tp_expected_price[idx] if idx < len(self._tp_expected_price) else self._snap_price(self._tp_prices[idx])
+        qty = sizes[idx] if idx < len(sizes) else Decimal("0")
+        if qty <= 0:
+            if idx < len(self._tp_completed):
+                self._tp_completed[idx] = True
+            if idx < len(self._tp_ids):
+                self._tp_ids[idx] = None
+            if self._active_tp_index == idx:
+                self._active_tp_index = None
+            self._next_tp_index = idx + 1
+            next_idx = self._current_tp_slot()
+            if next_idx is not None and next_idx != idx:
+                self._schedule_current_tp(base_qty, initial_delay)
+            else:
+                self._maybe_schedule_tp_check()
+            return
+        if self._tp_seed_queue:
+            self._tp_seed_queue = [task for task in self._tp_seed_queue if task.get("index") != idx]
+            self._update_tp_last_queue_due()
+        self._queue_tp_replacement(idx, price, qty, initial_delay)
+        if self._tp_seed_queue:
+            self._log(f"Queued {len(self._tp_seed_queue)} TP tasks with 1s spacing")
+        self._tps_seeded = False
+        self._process_tp_seed_queue()
+        self._maybe_schedule_tp_check()
+
+    def _seed_tps_once(self, base_qty: Decimal):
+        if self._tp_sequence_started or base_qty <= 0:
+            self._log(f"Skip TP seeding -> started={self._tp_sequence_started} base_qty={base_qty}")
+            return
+        self._tp_sequence_started = True
+        self._tp1_hit = False
+        self._cancelled_ladder_after_tp1 = False
+        self._desired_stop_trigger = self._decimal_or_zero(self.PRICE_SL)
+        self._ensure_tp_tracking()
+        self._tp_ids = [None] * len(self._tp_prices)
+        self._tp_completed = [False] * len(self._tp_prices)
+        self._tp_seed_queue = []
+        self._reset_tp_queue_timing()
+        for i in range(len(self._tp_expected_qty)):
+            self._tp_expected_qty[i] = Decimal("0")
+        for i in range(len(self._tp_expected_price)):
+            self._tp_expected_price[i] = Decimal("0")
+        self._active_tp_index = None
+        self._next_tp_index = 0
+        self._tp_reference_base = self._decimal_or_zero(base_qty)
+        self._schedule_current_tp(base_qty, 1.0)
+
+    def _refresh_all_tps(self, base_qty: Decimal):
+        self._ensure_tp_tracking()
+        if base_qty is None or base_qty <= 0:
+            self._cancel_all_tps()
+            return
+        if not self._tp_prices:
+            self._cancel_all_tps()
+            return
+        self._schedule_current_tp(base_qty, 0.0)
+
+    @staticmethod
+    def _decimal_or_none(value):
+        try:
+            return Decimal(str(value))
+        except Exception:
+            return None
+
+    @classmethod
+    def _decimal_or_zero(cls, value):
+        result = cls._decimal_or_none(value)
+        return result if result is not None else Decimal("0")
+
+    def _get_rules(self):
+        conn = self.connectors.get(self.EXCHANGE)
+        if conn is None:
+            return None
+        return getattr(conn, "trading_rules", None) or getattr(conn, "_trading_rules", None)
+
+    def _detect_precisions(self):
+        self._price_tick = self.PRICE_TICK_DEFAULT
+        self._size_step = self.SIZE_STEP_DEFAULT
+        rules = self._get_rules()
+        if not rules:
+            return
+        rule = rules.get(self.PAIR)
+        if not rule:
+            return
+        try:
+            self._price_tick = rule.min_price_increment
+        except Exception:
+            pass
+        try:
+            self._size_step = rule.min_base_amount_increment
+        except Exception:
+            pass
+
+    def _ensure_leverage(self):
+        lev = (self.DESIRED_LEVERAGE or "").strip()
+        if not lev:
+            return
+        try:
+            lev_value = float(lev)
+        except Exception:
+            return
+        if lev_value <= 0:
+            return
+        conn = self.connectors.get(self.EXCHANGE)
+        if conn is None:
+            return
+        try:
+            conn.set_leverage(self.PAIR, lev_value)
+            self._log(f"Leverage set to {lev_value}")
+        except Exception as e:
+            self._log(f"Failed to set leverage: {e}")
+
+    def _snap_price(self, value: Decimal) -> Decimal:
+        try:
+            v = Decimal(str(value))
+        except Exception:
+            return Decimal("0")
+        if v <= 0:
+            return Decimal("0")
+        if self._price_tick and self._price_tick > 0:
+            try:
+                steps = (v / self._price_tick).quantize(Decimal("1"))
+                v = steps * self._price_tick
+            except Exception:
+                pass
+        return v
+
+    def _snap_size(self, value: Decimal) -> Decimal:
+        try:
+            v = Decimal(str(value))
+        except Exception:
+            return Decimal("0")
+        if v <= 0:
+            return Decimal("0")
+        if self._size_step and self._size_step > 0:
+            try:
+                steps = (v / self._size_step).quantize(Decimal("1"), rounding=ROUND_DOWN)
+                v = steps * self._size_step
+            except Exception:
+                pass
+        return v
+
+    def _break_even_trigger(self, avg_entry: Decimal) -> Decimal:
+        buffer = self.sl_to_ep_buffer or Decimal("0")
+        if self._is_long():
+            raw = avg_entry * (Decimal("1") + buffer)
+        else:
+            raw = avg_entry * (Decimal("1") - buffer)
+        trigger = self._snap_price(raw)
+        tick = self._price_tick or Decimal("0")
+        if self._is_long():
+            if tick > 0 and trigger > raw:
+                steps = ((trigger - raw) / tick).quantize(Decimal("1"), rounding=ROUND_UP)
+                if steps > 0:
+                    trigger -= tick * steps
+            if trigger > raw:
+                trigger = raw
+        else:
+            if tick > 0 and trigger < raw:
+                steps = ((raw - trigger) / tick).quantize(Decimal("1"), rounding=ROUND_UP)
+                if steps > 0:
+                    trigger += tick * steps
+            if trigger < raw:
+                trigger = raw
+        if trigger <= 0:
+            trigger = raw if raw > 0 else Decimal("0")
+        return trigger
+
+    def _independent_sl_price(self, trigger: Decimal) -> Decimal:
+        offset = self.SL_MARKET_OFFSET_PCT or Decimal("0")
+        if offset <= 0:
+            return trigger
+        try:
+            offset = Decimal(str(offset))
+        except Exception:
+            offset = Decimal("0")
+        if self._is_long():
+            desired = trigger * (Decimal("1") - offset)
+        else:
+            desired = trigger * (Decimal("1") + offset)
+        price = self._snap_price(desired)
+        tick = self._price_tick or Decimal("0")
+        if self._is_long():
+            if tick > 0 and price >= trigger:
+                price -= tick
+            if price <= 0 or price >= trigger:
+                price = desired if desired > 0 else trigger
+        else:
+            if tick > 0 and price <= trigger:
+                price += tick
+            if price <= trigger:
+                price = desired if desired > trigger else trigger
+        if price <= 0:
+            price = trigger
+        return price
+
+    def _budget_per_order(self) -> Decimal:
+        if self.N_ORDERS <= 0:
+            return Decimal("0")
+        try:
+            denom = Decimal(str(self.N_ORDERS))
+        except Exception:
+            return Decimal("0")
+        if denom <= 0:
+            return Decimal("0")
+        return self.TOTAL_QUOTE_BUDGET / denom
+
+    def _seed_ladder(self):
+        if self._ladder_seeded:
+            return
+        conn = self.connectors.get(self.EXCHANGE)
+        if conn is None:
+            return
+        budget_per = self._budget_per_order()
+        for idx in range(self.N_ORDERS):
+            frac_num = self._decimal_or_zero(idx)
+            frac_den = self._decimal_or_zero(self.N_ORDERS - 1) if self.N_ORDERS > 1 else Decimal("0")
+            frac = frac_num / frac_den if frac_den > 0 else Decimal("0")
+            if self._is_long():
+                price_raw = self.PRICE_FLOOR + (self.PRICE_CEILING - self.PRICE_FLOOR) * frac
+            else:
+                price_raw = self.PRICE_CEILING - (self.PRICE_CEILING - self.PRICE_FLOOR) * frac
+            price = self._snap_price(price_raw)
+            if price <= 0:
+                continue
+            base_qty_raw = budget_per / price if price else Decimal("0")
+            qty = self._snap_size(base_qty_raw)
+            if qty <= 0:
+                continue
+            try:
+                if self._is_long():
+                    oid = self.buy(self.EXCHANGE, self.PAIR, qty, OrderType.LIMIT, price, position_action=PositionAction.OPEN)
+                else:
+                    oid = self.sell(self.EXCHANGE, self.PAIR, qty, OrderType.LIMIT, price, position_action=PositionAction.OPEN)
+            except Exception as e:
+                self._log(f"Failed to seed ladder order {idx + 1}: {e}")
+                continue
+            self._ladder_order_ids.add(oid)
+            self._log(f"Seeded ladder order {idx + 1}/{self.N_ORDERS}: qty={qty} price={price}")
+        self._ladder_seeded = True
+
+    # legacy TP helpers removed in favor of sequential TP queue logic above
+
+    def _post_or_update_independent_sl(self, trigger_price: Decimal, qty_base: Decimal) -> bool:
+        if not self.BYBIT_V5_CREATE or "bybit" not in self.EXCHANGE.lower():
+            return False
+        try:
+            import requests
+        except Exception as e:
+            self._log(f"Independent SL unavailable: {e}")
+            return False
+        api_key = self.BYBIT_API_KEY
+        api_secret = self.BYBIT_API_SECRET
+        if not api_key or not api_secret:
+            self._log("Independent SL skipped: missing API credentials")
+            return False
+        conn = self.connectors.get(self.EXCHANGE)
+        if conn is None:
+            self._log("Independent SL skipped: connector not ready")
+            return False
+        try:
+            qty = conn.quantize_order_amount(self.PAIR, qty_base)
+        except Exception:
+            qty = qty_base
+        if not qty or qty <= 0:
+            self._log("Independent SL skipped: qty too small after quantization")
+            return False
+        trigger = self._snap_price(trigger_price)
+        try:
+            trigger_q = conn.quantize_order_price(self.PAIR, trigger)
+        except Exception:
+            trigger_q = trigger
+        trigger_val = self._decimal_or_none(trigger_q)
+        if trigger_val is None or trigger_val <= 0:
+            self._log("Independent SL skipped: invalid trigger price")
+            return False
+        order_price_candidate = self._independent_sl_price(trigger_val)
+        try:
+            order_px_q = conn.quantize_order_price(self.PAIR, order_price_candidate)
+        except Exception:
+            order_px_q = order_price_candidate
+        order_px_val = self._decimal_or_none(order_px_q)
+        tick = self._price_tick or Decimal("0")
+        if order_px_val is None or order_px_val <= 0:
+            order_px_val = trigger_val * (Decimal("1") - self.SL_MARKET_OFFSET_PCT) if self._is_long() else trigger_val * (Decimal("1") + self.SL_MARKET_OFFSET_PCT)
+        if self._is_long():
+            if order_px_val >= trigger_val and tick > 0:
+                order_px_val = trigger_val - tick
+            if order_px_val <= 0 or order_px_val >= trigger_val:
+                order_px_val = trigger_val * (Decimal("1") - self.SL_MARKET_OFFSET_PCT)
+                if order_px_val <= 0:
+                    order_px_val = trigger_val
+        else:
+            if order_px_val <= trigger_val and tick > 0:
+                order_px_val = trigger_val + tick
+            if order_px_val <= trigger_val:
+                order_px_val = trigger_val * (Decimal("1") + self.SL_MARKET_OFFSET_PCT)
+                if order_px_val <= trigger_val:
+                    order_px_val = trigger_val
+        if self._sl_order_id or self._sl_link_id:
+            self._cancel_independent_sl()
+        symbol = self.PAIR.replace("-", "")
+        qty_str = format(qty, "f")
+        trigger_norm = trigger_val.normalize() if trigger_val != 0 else trigger_val
+        trigger_str = format(trigger_norm, "f")
+        if "." in trigger_str:
+            trigger_str = trigger_str.rstrip("0").rstrip(".")
+        if not trigger_str:
+            trigger_str = "0"
+        price_norm = order_px_val.normalize() if order_px_val != 0 else order_px_val
+        price_str = format(price_norm, "f")
+        if "." in price_str:
+            price_str = price_str.rstrip("0").rstrip(".")
+        if not price_str:
+            price_str = trigger_str
+        link_id = f"sl-{int(time.time() * 1000)}"
+        body = {
+            "category": self.BYBIT_CATEGORY,
+            "closeOnTrigger": False,
+            "orderType": self.SL_ORDER_TYPE,
+            "orderLinkId": link_id,
+            "positionIdx": self.SL_POSITION_IDX,
+            "qty": qty_str,
+            "reduceOnly": self.SL_REDUCE_ONLY,
+            "side": self._sl_side(),
+            "symbol": symbol,
+            "timeInForce": self.SL_TIME_IN_FORCE,
+            "triggerBy": self.SL_TRIGGER_BY,
+            "triggerDirection": self._sl_trigger_direction(),
+            "triggerPrice": trigger_str,
+            "price": price_str,
+        }
+        ts = str(int(time.time() * 1000))
+        recv_window = "5000"
+        body_json = json.dumps(body, separators=(",", ":"), ensure_ascii=False, sort_keys=True)
+        payload = ts + api_key + recv_window + body_json
+        sign = hmac.new(api_secret.encode(), payload.encode(), hashlib.sha256).hexdigest()
+        headers = {
+            "X-BAPI-API-KEY": api_key,
+            "X-BAPI-TIMESTAMP": ts,
+            "X-BAPI-RECV-WINDOW": recv_window,
+            "X-BAPI-SIGN": sign,
+            "Content-Type": "application/json",
+        }
+        try:
+            resp = requests.post(self.BYBIT_V5_CREATE, headers=headers, data=body_json, timeout=10)
+            try:
+                payload_json = resp.json()
+            except Exception:
+                payload_json = {}
+            if resp.status_code == 200 and isinstance(payload_json, dict) and payload_json.get("retCode") == 0:
+                result = payload_json.get("result")
+                order_id = result.get("orderId") if isinstance(result, dict) else None
+                self._sl_order_id = order_id
+                self._sl_link_id = link_id
+                self._current_stop_trigger = trigger_val
+                self._log(f"Independent SL posted: {self._sl_side()} {qty_str} {symbol} @ {trigger_str} -> {price_str} (orderId={order_id})")
+                return True
+            self._sl_link_id = None
+            self._log(f"Independent SL failed ({resp.status_code}): {resp.text}")
+        except Exception as e:
+            self._log(f"Independent SL request error: {e}")
+        self._sl_link_id = None
+        return False
+
+    def _cancel_independent_sl(self):
+        if not self._sl_order_id and not self._sl_link_id:
+            return
+        if not self.BYBIT_V5_CANCEL or "bybit" not in self.EXCHANGE.lower():
+            self._sl_order_id = None
+            self._sl_link_id = None
+            self._current_stop_trigger = None
+            return
+        try:
+            import requests
+        except Exception as e:
+            self._log(f"Independent SL cancel skipped: {e}")
+            self._sl_order_id = None
+            self._sl_link_id = None
+            self._current_stop_trigger = None
+            return
+        api_key = self.BYBIT_API_KEY
+        api_secret = self.BYBIT_API_SECRET
+        if not api_key or not api_secret:
+            self._sl_order_id = None
+            self._sl_link_id = None
+            self._current_stop_trigger = None
+            return
+        body = {
+            "category": self.BYBIT_CATEGORY,
+            "symbol": self.PAIR.replace("-", ""),
+        }
+        if self._sl_order_id:
+            body["orderId"] = self._sl_order_id
+        if self._sl_link_id:
+            body["orderLinkId"] = self._sl_link_id
+        ts = str(int(time.time() * 1000))
+        recv_window = "5000"
+        body_json = json.dumps(body, separators=(",", ":"), ensure_ascii=False, sort_keys=True)
+        payload = ts + api_key + recv_window + body_json
+        sign = hmac.new(api_secret.encode(), payload.encode(), hashlib.sha256).hexdigest()
+        headers = {
+            "X-BAPI-API-KEY": api_key,
+            "X-BAPI-TIMESTAMP": ts,
+            "X-BAPI-RECV-WINDOW": recv_window,
+            "X-BAPI-SIGN": sign,
+            "Content-Type": "application/json",
+        }
+        try:
+            resp = requests.post(self.BYBIT_V5_CANCEL, headers=headers, data=body_json, timeout=10)
+            ok = False
+            try:
+                payload_json = resp.json()
+                ok = resp.status_code == 200 and isinstance(payload_json, dict) and payload_json.get("retCode") == 0
+            except Exception:
+                ok = False
+            if ok:
+                self._log(f"Cancelled independent SL order {self._sl_order_id}")
+            else:
+                self._log(f"Failed to cancel independent SL {self._sl_order_id}: status={resp.status_code} body={resp.text}")
+        except Exception as e:
+            self._log(f"Independent SL cancel error: {e}")
+        self._sl_order_id = None
+        self._sl_link_id = None
+        self._current_stop_trigger = None
+
+    # ----- HB callbacks -----
+
+    def on_tick(self):
+        if not self._initialized:
+            self._detect_precisions()
+            self._ensure_leverage()
+            self._initialized = True
+        self._seed_ladder()
+        try:
+            self._process_tp_seed_queue()
+        except Exception as e:
+            self._log(f"TP queue error on tick: {e}")
+        self._maybe_schedule_tp_check()
+        if self._next_tp_check_ts is not None and self.current_timestamp >= self._next_tp_check_ts:
+            try:
+                self._verify_tp_orders()
+            except Exception as e:
+                self._log(f"TP verify error: {e}")
+            self._next_tp_check_ts = self.current_timestamp + 30.0
+        trigger = self._effective_stop_trigger()
+        if self._filled_base > 0 and not (self._sl_order_id or self._sl_link_id) and trigger > 0:
+            try:
+                self._post_or_update_independent_sl(trigger, self._filled_base)
+            except Exception as e:
+                self._log(f"SL post error on tick: {e}")
+
+    def did_cancel_order(self, event):
+        if getattr(event, "trading_pair", None) != self.PAIR:
+            return
+        evt_exchange = getattr(event, "exchange", None)
+        if evt_exchange and evt_exchange != self.EXCHANGE:
+            return
+        if event.order_id in self._ladder_order_ids:
+            self._ladder_order_ids.discard(event.order_id)
+        for idx, oid in enumerate(self._tp_ids):
+            if oid and event.order_id == oid:
+                self._tp_ids[idx] = None
+                if idx < len(self._tp_expected_qty):
+                    self._tp_expected_qty[idx] = Decimal("0")
+                if idx < len(self._tp_completed):
+                    self._tp_completed[idx] = False
+                if self._active_tp_index == idx:
+                    self._active_tp_index = None
+        if self._sl_order_id and event.order_id == self._sl_order_id:
+            self._sl_order_id = None
+            self._sl_link_id = None
+            self._current_stop_trigger = None
+
+    def did_fill_order(self, event: OrderFilledEvent):
+        if getattr(event, "trading_pair", None) != self.PAIR:
+            return
+        evt_exchange = getattr(event, "exchange", None)
+        if evt_exchange and evt_exchange != self.EXCHANGE:
+            return
+        try:
+            base_amt = Decimal(str(event.amount))
+        except Exception as e:
+            self._log(f"Invalid fill amount {event.amount}: {e}")
+            return
+        price_amt = self._decimal_or_zero(event.price)
+        if price_amt <= 0:
+            self._log(f"Fill price missing or invalid for order {event.order_id}: {event.price}")
+        quote_amt = price_amt * base_amt
+        is_entry = (self._is_long() and event.trade_type == TradeType.BUY) or ((not self._is_long()) and event.trade_type == TradeType.SELL)
+        if is_entry:
+            self._filled_base += base_amt
+            self._spent_quote += quote_amt
+            if not self._tp_sequence_started and self._filled_base > 0:
+                try:
+                    self._seed_tps_once(self._filled_base)
+                except Exception as e:
+                    self._log(f"TP seed error after first fill: {e}")
+            else:
+                if self._tp_sequence_started and self._filled_base > 0:
+                    try:
+                        self._schedule_current_tp(self._filled_base, 0.0)
+                    except Exception as e:
+                        self._log(f"TP reschedule error after fill: {e}")
+            trigger = self._effective_stop_trigger()
+            if self._filled_base > 0 and trigger > 0:
+                try:
+                    self._post_or_update_independent_sl(trigger, self._filled_base)
+                except Exception as e:
+                    self._log(f"SL post error after entry fill: {e}")
+        else:
+            let_tp = False
+            self._filled_base -= base_amt
+            if self._filled_base < 0:
+                self._filled_base = Decimal("0")
+            self._spent_quote -= quote_amt
+            if self._spent_quote < 0:
+                self._spent_quote = Decimal("0")
+            for idx, oid in enumerate(self._tp_ids):
+                if oid and event.order_id == oid:
+                    self._tp_ids[idx] = None
+                    let_tp = True
+                    if idx < len(self._tp_completed):
+                        self._tp_completed[idx] = True
+                    if idx < len(self._tp_expected_qty):
+                        self._tp_expected_qty[idx] = Decimal("0")
+                    if self._active_tp_index == idx:
+                        self._active_tp_index = None
+                    self._next_tp_index = idx + 1
+                    if idx == 0 and not self._tp1_hit:
+                        self._tp1_hit = True
+                        self._move_stop_to_break_even()
+                        self._cancel_remaining_ladder_orders()
+                    break
+            if let_tp and self._filled_base > 0:
+                try:
+                    self._schedule_current_tp(self._filled_base, 1.0)
+                except Exception as e:
+                    self._log(f"TP schedule error after TP fill: {e}")
+            trigger = self._effective_stop_trigger()
+            if self._filled_base > 0 and trigger > 0:
+                try:
+                    self._post_or_update_independent_sl(trigger, self._filled_base)
+                except Exception as e:
+                    self._log(f"SL post error after exit fill: {e}")
+            else:
+                self._cancel_all_tps()
+                self._cancel_independent_sl()
+        if self._filled_base == 0:
+            self._tp_sequence_started = False
+            self._desired_stop_trigger = self._decimal_or_zero(self.PRICE_SL)
+            self._tp1_hit = False
+            self._cancelled_ladder_after_tp1 = False
+            self._tp_reference_base = Decimal("0")
+
+    def format_status(self) -> str:
+        lines = [
+            f"Exchange: {self.EXCHANGE}  Pair: {self.PAIR}  Side: {self.SIDE}",
+            f"Filled base: {self._filled_base}  Spent quote: {self._spent_quote}",
+            f"TP targets: {[ (t['price'], t['frac']) for t in self._tp_targets ]}",
+            f"Active TP orders: {sum(1 for x in self._tp_ids if x)}",
+            f"Ladder active orders: {len(self._ladder_order_ids)}",
+        ]
+        if self._current_stop_trigger:
+            lines.append(f"Independent SL trigger: {self._current_stop_trigger}")
+        return "\\n".join(lines)
+
+
+QuickSetupLadderTPSL.markets = {QuickSetupLadderTPSL.EXCHANGE: [QuickSetupLadderTPSL.PAIR]}
+`.trim();
+  }
+
+
+
+
+  function buildQuickSetupLadderScript(ctx) {
+    const { tpVals, fracs } = gatherQuickSetupTPsAndFracs();
+    const n_orders = 10;
+
+    const divPrice = cleanNumber(document.getElementById('divPrice').value);
+    const boxPrice = cleanNumber(document.getElementById('boxPrice').value);
+
+    const required = [ctx.totalNotional, ctx.stop, ctx.entry, ctx.maxChase, ctx.effectiveLeverage, divPrice, boxPrice];
+    if (required.some(v => v === undefined || v === null || isNaN(v) || v <= 0)) {
+      document.getElementById('scriptBox').value = '';
+      return;
+    }
+
+    const trading_pair = resolvePair();
+    const connector = resolveConnector(ctx.exchange);
+    const subaccountEl = document.getElementById('subaccount');
+    const bybitSubaccount = subaccountEl ? subaccountEl.value : '';
+    const { priceTick, sizeStep } = fallbackPrecisionsFor(connector);
+    const leverageStr = formatLeverageForExchange(ctx.effectiveLeverage, ctx.exchange);
+    const side = (ctx.tradeType === 'Short') ? 'short' : 'long';
+
+    const slEpBufferFraction = getBufferFractionById('slEpBuffer', 0.3);
+
+    const p = {
+      connector,
+      trading_pair,
+      side,
+      total_quote_budget: toDecimalStr(ctx.totalNotional),
+      n_orders,
+      price_floor: toDecimalStr(boxPrice),
+      price_ceiling: toDecimalStr(divPrice),
+      price_cap: toDecimalStr(ctx.maxChase),
+      priceSL: toDecimalStr(ctx.stop),
+      tp_prices: tpVals.map(v => toDecimalStr(v)),
+      tp_fracs: fracs,
+      desired_leverage: leverageStr,
+      price_tick_default: priceTick,
+      size_step_default: sizeStep,
+      sl_to_ep_buffer: toDecimalStr(slEpBufferFraction),
+      bybit_subaccount: bybitSubaccount,
+      exchange_name: ctx.exchange
+    };
+
+    const script = quickSetupTemplate(p);
+    document.getElementById('scriptBox').value = script;
+  }
+
+  function buildPreviewRow(label, value, type) {
+    const safeLabel = escapeHtml(label);
+    const raw = (value === undefined || value === null) ? '' : String(value).trim();
+    const displayValue = raw ? escapeHtml(raw) : '&nbsp;';
+    return `<div class="preview-row ${type}"><span class="preview-label">${safeLabel}:</span><span class="preview-value">${displayValue}</span></div>`;
+  }
+
+  function renderPreview(tradeType, data, options = {}) {
+    const isShort = tradeType === 'Short';
+    const {
+      epLabel = 'EP',
+      includeLow = true,
+      includeHi = true,
+      cardModifier = '',
+      lowLabel = 'LOW',
+      hiLabel = 'HI'
+    } = options;
+    const rows = isShort
+      ? [
+          { label: 'SL', key: 'sl', type: 'sl' },
+          includeHi ? { label: hiLabel, key: 'hi', type: 'hi' } : null,
+          { label: epLabel, key: 'ep', type: 'ep' },
+          { label: 'TP1', key: 'tp1', type: 'tp' },
+          { label: 'TP2', key: 'tp2', type: 'tp' },
+          { label: 'TP3', key: 'tp3', type: 'tp' },
+          { label: 'TP4', key: 'tp4', type: 'tp' },
+          { label: 'TP5', key: 'tp5', type: 'tp' },
+          { label: 'TP6', key: 'tp6', type: 'tp' },
+        ].filter(Boolean)
+      : [
+          { label: 'TP6', key: 'tp6', type: 'tp' },
+          { label: 'TP5', key: 'tp5', type: 'tp' },
+          { label: 'TP4', key: 'tp4', type: 'tp' },
+          { label: 'TP3', key: 'tp3', type: 'tp' },
+          { label: 'TP2', key: 'tp2', type: 'tp' },
+          { label: 'TP1', key: 'tp1', type: 'tp' },
+          { label: epLabel, key: 'ep', type: 'ep' },
+          includeLow ? { label: lowLabel, key: 'low', type: 'low' } : null,
+          { label: 'SL', key: 'sl', type: 'sl' },
+        ].filter(Boolean);
+
+    const cardClass = [
+      isShort ? 'preview-card preview-short' : 'preview-card preview-long',
+      cardModifier
+    ].filter(Boolean).join(' ');
+    const content = rows.map(row => buildPreviewRow(row.label, data[row.key], row.type)).join('');
+    return `<div class="${cardClass}">${content}</div>`;
+  }
+
+  function closePreview() {
+    const modal = document.getElementById('previewModal');
+    if (!modal) return;
+    modal.classList.remove('active');
+    const body = document.getElementById('previewBody');
+    if (body) body.innerHTML = '';
+    const subtitle = document.getElementById('previewSubtitle');
+    if (subtitle) subtitle.textContent = '';
+  }
+
+  function previewTrade() {
+    calculate();
+
+    const modal = document.getElementById('previewModal');
+    if (!modal) return;
+
+    const tradeTypeEl = document.getElementById('tradeType');
+    const strategyEl = document.getElementById('strategy');
+    const tradeType = tradeTypeEl ? tradeTypeEl.value : 'Long';
+    const strategy = strategyEl ? strategyEl.value : '';
+
+    const data = {};
+    for (let i = 1; i <= 6; i++) {
+      const el = document.getElementById(`expTP${i}`);
+      data[`tp${i}`] = el ? el.value : '';
+    }
+
+    const stopEl = document.getElementById('stop');
+    data.sl = stopEl ? stopEl.value : '';
+
+    const entryEl = document.getElementById('entry');
+    const divPriceEl = document.getElementById('divPrice');
+    const boxPriceEl = document.getElementById('boxPrice');
+    const entryValue = entryEl ? entryEl.value : '';
+    const divPriceValue = divPriceEl ? divPriceEl.value : '';
+    const boxPriceValue = boxPriceEl ? boxPriceEl.value : '';
+
+    const isSwarm = strategy === 'Swarm';
+    const isQuickSetup = strategy === 'Quick Setup';
+    const previewOptions = {};
+
+    if (isSwarm) {
+      data.ep = entryValue;
+      data.low = '';
+      data.hi = '';
+      previewOptions.includeLow = false;
+      previewOptions.includeHi = false;
+    } else if (isQuickSetup) {
+      data.ep = divPriceValue;
+      if (tradeType === 'Long') {
+        data.low = boxPriceValue;
+        data.hi = '';
+      } else {
+        data.low = '';
+        data.hi = boxPriceValue;
+      }
+      previewOptions.epLabel = '24m PDP';
+      previewOptions.includeLow = (tradeType === 'Long');
+      previewOptions.includeHi = (tradeType === 'Short');
+      previewOptions.lowLabel = 'Box Edge';
+      previewOptions.hiLabel = 'Box Edge';
+      previewOptions.cardModifier = 'preview-quick-setup';
+    } else {
+      data.ep = entryValue;
+      data.low = '';
+      data.hi = '';
+    }
+
+    if (tradeType === 'Long') {
+      data.hi = '';
+    } else {
+      data.low = '';
+    }
+
+    const body = document.getElementById('previewBody');
+    if (body) {
+      body.innerHTML = renderPreview(tradeType, data, previewOptions);
+    }
+
+    const subtitle = document.getElementById('previewSubtitle');
+    if (subtitle) {
+      const parts = [];
+      const strategyLabel = strategyEl && strategyEl.selectedIndex >= 0
+        ? strategyEl.options[strategyEl.selectedIndex].text
+        : strategy;
+      if (strategyLabel) parts.push(strategyLabel);
+      if (tradeType) parts.push(tradeType);
+      subtitle.textContent = parts.join(' • ');
+    }
+
+    modal.classList.add('active');
+  }
+
+  (function initPreviewModal() {
+    const modal = document.getElementById('previewModal');
+    if (!modal) return;
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) {
+        closePreview();
+      }
+    });
+  })();
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closePreview();
+    }
+  });
+
+  // ---------- end wiring ----------
+  restoreMarginFromStorage();
+  onStrategyChange();
+  updateOutputCommands();
+  updateConnectionBoxes();
+</script>
+</body>
+</html>
