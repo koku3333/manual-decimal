@@ -412,6 +412,7 @@
   // ---------- utils ----------
   function cleanNumber(input) { return parseFloat(String(input || '').replace(/,/g, '')); }
   function formatWithCommas(num) { return isNaN(num) ? "" : Number(num).toLocaleString(); }
+  const NO_FORMAT_INPUT_IDS = new Set(['budget', 'stop', 'market', 'expTP1', 'expTP2', 'expTP3', 'expTP4', 'expTP5', 'expTP6']);
   function formatImportNumber(value) {
     if (value === undefined || value === null) return '';
     const raw = String(value).trim();
@@ -472,7 +473,11 @@
     numericMappings.forEach(([id, value]) => {
       const el = document.getElementById(id);
       if (!el || value === undefined || value === null) return;
-      el.value = formatImportNumber(value);
+      if (NO_FORMAT_INPUT_IDS.has(id)) {
+        el.value = String(value).replace(/,/g, '').trim();
+      } else {
+        el.value = formatImportNumber(value);
+      }
     });
 
     calculate();
@@ -647,16 +652,33 @@
   }
 
   function formatAndCalculate(el) {
+    if (!el) {
+      calculate();
+      return;
+    }
     const raw = el.value.replace(/,/g, '');
     const parsed = parseFloat(raw);
-    if (!isNaN(parsed)) { el.value = formatWithCommas(parsed); }
-    if (el && el.id === 'budget') { rememberMarginValue(el.value); }
+    const skipFormatting = NO_FORMAT_INPUT_IDS.has(el.id);
+    if (!isNaN(parsed)) {
+      el.value = skipFormatting ? raw : formatWithCommas(parsed);
+    }
+    if (el.id === 'budget') {
+      rememberMarginValue(skipFormatting ? raw : el.value);
+    }
     calculate();
   }
   function formatMarketAndSyncEntry(el) {
+    if (!el) {
+      syncEntryWithMarket();
+      calculate();
+      return;
+    }
     const raw = el.value.replace(/,/g, '');
     const parsed = parseFloat(raw);
-    if (!isNaN(parsed)) { el.value = formatWithCommas(parsed); }
+    const skipFormatting = NO_FORMAT_INPUT_IDS.has(el.id);
+    if (!isNaN(parsed)) {
+      el.value = skipFormatting ? raw : formatWithCommas(parsed);
+    }
     syncEntryWithMarket();
     calculate();
   }
@@ -743,7 +765,12 @@
       return;
     }
     const market = entry / factor;
-    marketEl.value = formatWithCommas(market);
+    if (NO_FORMAT_INPUT_IDS.has('market')) {
+      const marketStr = toDecimalStr(market);
+      marketEl.value = marketStr ?? '';
+    } else {
+      marketEl.value = formatWithCommas(market);
+    }
   }
 
   function onStrategyChange() {
@@ -856,7 +883,7 @@
     const stopLoss = entry / cap;
     const newSL = (tradeType === 'Long') ? entry - stopLoss : entry + stopLoss;
     const el = document.getElementById('stop');
-    el.value = formatWithCommas(newSL);
+    el.value = toDecimalStr(newSL);
     calculate();
   }
 
