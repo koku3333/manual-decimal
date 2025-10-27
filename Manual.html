@@ -215,21 +215,7 @@
       }
     }
 
-    const endsWithIncomplete = sanitized.endsWith('.') || sanitized.endsWith(',') || sanitized === '-' || sanitized === '';
-    if (!endsWithIncomplete) {
-      const numeric = cleanNumber(sanitized);
-      if (!isNaN(numeric)) {
-        const formatted = formatWithSeparators(numeric);
-        if (formatted !== sanitized) {
-          const caretAtEnd = selectionEnd === original.length;
-          el.value = formatted;
-          if (caretAtEnd) {
-            const pos = formatted.length;
-            requestAnimationFrame(() => el.setSelectionRange(pos, pos));
-          }
-        }
-      }
-    }
+    // Keep the user's raw input without auto-formatting so decimals can be edited freely.
 
     if (typeof callback === 'function') {
       callback();
